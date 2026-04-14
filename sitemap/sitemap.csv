@@ -1,0 +1,26 @@
+名稱,類型,URL,備註
+登入,頁面,/login,顯示「以 Microsoft SSO 登入」按鈕；未登入時所有路徑皆導向此頁
+SSO Callback,系統,/auth/callback,OAuth 驗證完成後的 redirect 處理；不對使用者顯示
+登出,動作,/auth/logout,清除 Session 後導回 /login
+無權限,頁面,/403,帳號已登入但角色無此模組 Read 權限時顯示
+找不到頁面,頁面,/404,路徑不存在時顯示
+Dashboard,頁面,/dashboard,
+語系管理,頁面,/system/languages,管理 EN / TW / CN / JP / DE 啟用狀態
+系統設定,頁面,/system/settings,SMTP 等底層參數設定
+規格欄位管理,頁面,/system/spec-fields,定義 Spec Group / Spec Field 並綁定大分類；Admin 層級才操作
+操作記錄,頁面,/system/logs,所有 CREATE / UPDATE / DELETE 操作記錄
+角色管理,頁面,/accounts/roles,定義 Admin / PM / MKT / Designer / FAE 與 Read / Write 權限矩陣
+帳號管理,頁面,/accounts/users,Microsoft SSO 帳號新增與停用
+產品總覽,頁面,/products,資料夾式 Listing（大分類 > 次分類 > 產品）；主入口
+分類編輯,頁面,/products/categories/:id/edit,Landing Page 富文字 / RWD Banner / 分類代表圖 / SEO / 自訂 HTML；多語系 Tab + 一鍵同步
+篩選器管理,頁面,/products/categories/:id/filters,此分類下的 Filter 群組（多語系名稱）與 Filter 選項；從大分類資料夾進入
+產品編輯 - 基本資訊,Tab,/products/:id/edit#basic,型號 / 生命週期 / 主次分類 / 篩選器勾選 / Tags；全語系共用
+產品編輯 - 產品圖片,Tab,/products/:id/edit#images,多圖群組 + RWD 三尺寸（Desktop / Tablet / Mobile）；拖曳排序；全語系共用
+產品編輯 - 產品規格,Tab,/products/:id/edit#specs,SKU Matrix 填值 / Excel 批次匯入 / 技術文件上傳；全語系共用
+產品編輯 - Landing Page,Tab,/products/:id/edit#landing,產品特色列點 / Overview 富文字 / Icon 群組 / SEO / 自訂 HTML；各語系獨立
+產品編輯 - 訂購資訊,Tab,/products/:id/edit#ordering,P/N 列表 + 動態 Port 欄位（LAN / USB 等）；全語系共用
+產品編輯 - 關聯與配件,Tab,/products/:id/edit#relations,衍生產品 / 配件 Smart Search / HubSpot 內容串接；各語系獨立
+Tag 列表,頁面,/products/tags,無階層無排序；語系狀態燈號
+Tag 編輯,頁面,/products/tags/:id/edit,Landing Page 富文字 / RWD Banner / 代表圖 / SEO / 自訂 HTML；多語系 Tab + 一鍾同步
+檔案分類管理,頁面,/files/categories,兩層分類結構（大分類 / 次分類）
+檔案列表,頁面,/files,上傳或外部連結；可綁定產品或分類；Partner Zone 控制

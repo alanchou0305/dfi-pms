@@ -387,6 +387,7 @@ const SAMPLE = {
         { key: 'lan', label: 'LAN Port' },
         { key: 'usb', label: 'USB Port' },
       ],
+      visibleColKeys: ['modelName', 'pn', 'processor', 'memory', 'thermal', 'operatingTemp', 'lan', 'usb'],
       rows: [
         { modelName: 'EC70A-SU', pn: 'EC70A-SU-0001', processor: 'Intel® Core™ i7-1185G7E', memory: 'DDR4, up to 64GB', thermal: 'Fanless', operatingTemp: '-20°C ~ 60°C', lan: 2, usb: 6 },
         { modelName: 'EC70A-SU', pn: 'EC70A-SU-0002', processor: 'Intel® Core™ i5-1145G7E', memory: 'DDR4, up to 32GB', thermal: 'Fanless', operatingTemp: '-20°C ~ 60°C', lan: 2, usb: 6 },
@@ -506,20 +507,20 @@ const SAMPLE = {
   ],
 
   auditLogs: [
-    { user: 'Alan Chen',    module: '產品管理', action: 'UPDATE', desc: '更新 EC70A-SU 規格資訊（I/O Interface）',          time: '2026-04-15 10:23' },
-    { user: 'Lisa Wang',    module: '產品管理', action: 'UPDATE', desc: '更新 EC70A-SU Landing Page 特色條列（EN）',         time: '2026-04-14 17:05' },
-    { user: 'Kevin Lee',    module: '產品管理', action: 'UPDATE', desc: '上傳 EC551-CR 產品圖片（Desktop / Tablet）',        time: '2026-04-14 15:40' },
-    { user: 'Tina Huang',   module: '檔案管理', action: 'CREATE', desc: '新增下載檔案：EC70A-SU BIOS v1.3.2',               time: '2026-04-12 11:18' },
-    { user: 'Alan Chen',    module: '產品管理', action: 'CREATE', desc: '新增產品 EC70A-BT（生命週期：Preview）',            time: '2026-04-10 09:32' },
-    { user: 'System Admin', module: '帳號管理', action: 'UPDATE', desc: '更新使用者 Tina Huang 角色為 FAE',                 time: '2026-04-08 14:50' },
+    { user: 'Alan Chen',    module: '產品管理', page: '產品編輯',   action: 'UPDATE', target: 'EC70A-SU',             time: '2026-04-15 10:23' },
+    { user: 'Lisa Wang',    module: '產品管理', page: '產品編輯',   action: 'UPDATE', target: 'EC70A-SU',             time: '2026-04-14 17:05' },
+    { user: 'Kevin Lee',    module: '產品管理', page: '產品編輯',   action: 'UPDATE', target: 'EC551-CR',             time: '2026-04-14 15:40' },
+    { user: 'Tina Huang',   module: '檔案管理', page: '檔案列表',   action: 'CREATE', target: 'EC70A-SU BIOS v1.3.2', time: '2026-04-12 11:18' },
+    { user: 'Alan Chen',    module: '產品管理', page: '產品列表',   action: 'CREATE', target: 'EC70A-BT',             time: '2026-04-10 09:32' },
+    { user: 'System Admin', module: '帳號管理', page: '使用者管理', action: 'UPDATE', target: 'Tina Huang',           time: '2026-04-08 14:50' },
   ],
 
   errorLogs: [
-    { type: 'API 錯誤',  module: '產品管理', msg: 'Failed to sync EC551-CR: upstream timeout (dfi.com /api/products)',   user: 'System',       time: '2026-04-15 06:01' },
-    { type: '驗證失敗',  module: '產品管理', msg: '必填欄位缺失：Short Description（EN）— 產品 SD101-D26',               user: 'Lisa Wang',    time: '2026-04-13 15:22' },
-    { type: '系統錯誤',  module: '檔案管理', msg: 'File upload failed: max size exceeded (52 MB > 50 MB limit)',         user: 'Kevin Lee',    time: '2026-04-12 10:55' },
-    { type: 'API 錯誤',  module: '產品管理', msg: '官網 API timeout（/api/products/SD101-D26），retry 3 次後放棄',       user: 'System',       time: '2026-04-10 06:00' },
-    { type: '驗證失敗',  module: '帳號管理', msg: '密碼格式不符規則（使用者 clin@dfi.com）登入失敗',                     user: 'System Admin', time: '2026-04-08 09:10' },
+    { user: 'System',       module: '產品管理', source: 'Sync Job',    target: 'EC551-CR',            type: 'API 錯誤', msg: 'Failed to sync: upstream timeout (dfi.com /api/products)', time: '2026-04-15 06:01' },
+    { user: 'Lisa Wang',    module: '產品管理', source: '產品編輯',    target: 'SD101-D26',           type: '驗證失敗', msg: '必填欄位缺失：Short Description（EN）',                    time: '2026-04-13 15:22' },
+    { user: 'Kevin Lee',    module: '檔案管理', source: '檔案列表',    target: 'product-image.jpg',   type: '系統錯誤', msg: 'File upload failed: max size exceeded (52 MB > 50 MB)',    time: '2026-04-12 10:55' },
+    { user: 'System',       module: '產品管理', source: 'Sync Job',    target: 'SD101-D26',           type: 'API 錯誤', msg: '官網 API timeout，retry 3 次後放棄',                       time: '2026-04-10 06:00' },
+    { user: 'System Admin', module: '帳號管理', source: '使用者管理',  target: 'clin@dfi.com',        type: '驗證失敗', msg: '密碼格式不符規則，登入失敗',                               time: '2026-04-08 09:10' },
   ],
 };
 
@@ -900,81 +901,194 @@ const BASE_ORDERING_COLS = [
   { key: 'operatingTemp', label: 'Operating Temp', width: '130px' },
 ];
 
-let _dragPortKey = null;
+// ── Edit Columns panel state ──────────────────────────────────
+let _ecWorkingState = null;
+let _ecDragKey = null;
+const _BASE_KEYS = () => BASE_ORDERING_COLS.map(c => c.key);
 
-function renderDynamicPortsSettings() {
-  const el = document.getElementById('dyn-ports-tags');
-  if (!el) return;
-  const { dynamicCols } = SAMPLE.productEdit.ordering;
-  if (!dynamicCols || dynamicCols.length === 0) {
-    el.innerHTML = `<span class="dyn-ports-empty">尚未設定 Port 欄位，點擊「新增 Port」建立</span>`;
-    return;
-  }
-  el.innerHTML = dynamicCols.map(c =>
-    `<div class="dyn-port-tag" draggable="true" data-key="${c.key}">
-      <span class="dyn-port-drag" title="拖曳排序">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="6" x2="19" y2="6"/><line x1="5" y1="12" x2="19" y2="12"/><line x1="5" y1="18" x2="19" y2="18"/></svg>
-      </span>
-      <span class="dyn-port-label">${c.label}</span>
-      <button class="dyn-port-tag-del" onclick="removeOrderingCol('${c.key}')" title="移除此 Port">×</button>
-    </div>`
-  ).join('');
-  setupPortsDnD();
+function openEditColumnsPanel() {
+  const ord = SAMPLE.productEdit.ordering;
+  _ecWorkingState = {
+    dynamicCols: ord.dynamicCols.map(c => ({ ...c })),
+    visibleColKeys: [...(ord.visibleColKeys || [..._BASE_KEYS(), ...ord.dynamicCols.map(c => c.key)])],
+  };
+  renderEditColumnsPanel();
+  document.getElementById('edit-columns-modal').style.display = 'flex';
 }
 
-function setupPortsDnD() {
-  const container = document.getElementById('dyn-ports-tags');
+function cancelEditColumns() {
+  _ecWorkingState = null;
+  document.getElementById('edit-columns-modal').style.display = 'none';
+}
+
+function applyEditColumns() {
+  const ord = SAMPLE.productEdit.ordering;
+  ord.dynamicCols = _ecWorkingState.dynamicCols;
+  ord.visibleColKeys = _ecWorkingState.visibleColKeys;
+  _ecWorkingState = null;
+  document.getElementById('edit-columns-modal').style.display = 'none';
+  renderOrderingTable();
+}
+
+function renderEditColumnsPanel() {
+  if (!_ecWorkingState) return;
+  const { dynamicCols, visibleColKeys } = _ecWorkingState;
+  const baseKeys = _BASE_KEYS();
+
+  // ── Left panel ────────────────────────────────────────────────
+  const leftEl = document.getElementById('ec-available-list');
+  if (leftEl) {
+    const fixedHtml = `
+      <div class="ec-section-label">固定欄位</div>
+      ${BASE_ORDERING_COLS.map(c => `
+        <div class="ec-col-item ec-col-fixed">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--text-3)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span class="ec-col-name">${c.label}</span>
+        </div>`).join('')}`;
+
+    const portHtml = `
+      <div class="ec-section-label" style="margin-top:12px">Port 欄位</div>
+      ${dynamicCols.length === 0
+        ? `<div class="ec-list-empty">尚無 Port 欄位，點擊「新增 Port 欄位」建立</div>`
+        : dynamicCols.map(c => {
+            const isVisible = visibleColKeys.includes(c.key);
+            return `
+              <div class="ec-col-item ec-col-port">
+                <span class="ec-col-name">${c.label}</span>
+                <div class="ec-col-actions">
+                  ${isVisible
+                    ? `<span class="ec-col-badge-on">顯示中</span>`
+                    : `<button class="ec-col-add-btn" onclick="ecAddPortToVisible('${c.key}')">+ 加入</button>`}
+                  <button class="ec-col-del-btn" onclick="ecDeletePortSchema('${c.key}')" title="從 schema 中移除">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                  </button>
+                </div>
+              </div>`;
+          }).join('')}`;
+
+    leftEl.innerHTML = fixedHtml + portHtml;
+  }
+
+  // ── Right panel ───────────────────────────────────────────────
+  const rightEl = document.getElementById('ec-selected-list');
+  if (rightEl) {
+    const allColDefs = [...BASE_ORDERING_COLS, ...dynamicCols];
+    const visibleCols = visibleColKeys.map(k => allColDefs.find(c => c.key === k)).filter(Boolean);
+    rightEl.innerHTML = visibleCols.map(c => {
+      const isFixed = baseKeys.includes(c.key);
+      return `
+        <div class="ec-sel-item${isFixed ? ' ec-sel-fixed' : ''}" draggable="true" data-key="${c.key}">
+          <span class="ec-sel-drag">
+            <svg width="10" height="14" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="3" cy="3" r=".8" fill="currentColor" stroke="none"/><circle cx="7" cy="3" r=".8" fill="currentColor" stroke="none"/><circle cx="3" cy="8" r=".8" fill="currentColor" stroke="none"/><circle cx="7" cy="8" r=".8" fill="currentColor" stroke="none"/><circle cx="3" cy="13" r=".8" fill="currentColor" stroke="none"/><circle cx="7" cy="13" r=".8" fill="currentColor" stroke="none"/></svg>
+          </span>
+          <span class="ec-sel-name">${c.label}</span>
+          ${isFixed
+            ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ec-sel-lock"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`
+            : `<button class="ec-sel-remove" onclick="ecRemovePortFromVisible('${c.key}')" title="從顯示欄移除">×</button>`}
+        </div>`;
+    }).join('');
+    setupEcRightDnD();
+  }
+}
+
+function setupEcRightDnD() {
+  const container = document.getElementById('ec-selected-list');
   if (!container) return;
-  container.querySelectorAll('.dyn-port-tag').forEach(tag => {
-    tag.addEventListener('dragstart', e => {
-      _dragPortKey = tag.dataset.key;
-      tag.classList.add('port-dragging');
+  container.querySelectorAll('.ec-sel-item').forEach(item => {
+    item.addEventListener('dragstart', e => {
+      _ecDragKey = item.dataset.key;
+      item.classList.add('ec-sel-dragging');
       e.dataTransfer.effectAllowed = 'move';
     });
-    tag.addEventListener('dragend', () => {
-      _dragPortKey = null;
-      tag.classList.remove('port-dragging');
-      container.querySelectorAll('.dyn-port-tag').forEach(t => t.classList.remove('port-drag-over'));
+    item.addEventListener('dragend', () => {
+      _ecDragKey = null;
+      item.classList.remove('ec-sel-dragging');
+      container.querySelectorAll('.ec-sel-item').forEach(t => t.classList.remove('ec-sel-drag-over'));
     });
-    tag.addEventListener('dragover', e => {
+    item.addEventListener('dragover', e => {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
-      container.querySelectorAll('.dyn-port-tag').forEach(t => t.classList.remove('port-drag-over'));
-      if (tag.dataset.key !== _dragPortKey) tag.classList.add('port-drag-over');
+      container.querySelectorAll('.ec-sel-item').forEach(t => t.classList.remove('ec-sel-drag-over'));
+      if (item.dataset.key !== _ecDragKey) item.classList.add('ec-sel-drag-over');
     });
-    tag.addEventListener('dragleave', () => tag.classList.remove('port-drag-over'));
-    tag.addEventListener('drop', e => {
+    item.addEventListener('dragleave', () => item.classList.remove('ec-sel-drag-over'));
+    item.addEventListener('drop', e => {
       e.preventDefault();
-      const targetKey = tag.dataset.key;
-      if (!_dragPortKey || _dragPortKey === targetKey) return;
-      const ord = SAMPLE.productEdit.ordering;
-      const fromIdx = ord.dynamicCols.findIndex(c => c.key === _dragPortKey);
-      const toIdx   = ord.dynamicCols.findIndex(c => c.key === targetKey);
+      const targetKey = item.dataset.key;
+      if (!_ecDragKey || _ecDragKey === targetKey) return;
+      const vk = _ecWorkingState.visibleColKeys;
+      const fromIdx = vk.indexOf(_ecDragKey);
+      const toIdx = vk.indexOf(targetKey);
       if (fromIdx === -1 || toIdx === -1) return;
-      const [moved] = ord.dynamicCols.splice(fromIdx, 1);
-      ord.dynamicCols.splice(toIdx, 0, moved);
-      _dragPortKey = null;
-      renderOrderingTable();
+      const [moved] = vk.splice(fromIdx, 1);
+      vk.splice(toIdx, 0, moved);
+      _ecDragKey = null;
+      renderEditColumnsPanel();
     });
   });
 }
 
-function renderOrderingTable() {
-  renderDynamicPortsSettings();
+function ecAddPortToVisible(key) {
+  if (!_ecWorkingState.visibleColKeys.includes(key)) {
+    _ecWorkingState.visibleColKeys.push(key);
+    renderEditColumnsPanel();
+  }
+}
 
+function ecRemovePortFromVisible(key) {
+  if (_BASE_KEYS().includes(key)) return;
+  _ecWorkingState.visibleColKeys = _ecWorkingState.visibleColKeys.filter(k => k !== key);
+  renderEditColumnsPanel();
+}
+
+function ecDeletePortSchema(key) {
+  if (_BASE_KEYS().includes(key)) return;
+  _ecWorkingState.dynamicCols = _ecWorkingState.dynamicCols.filter(c => c.key !== key);
+  _ecWorkingState.visibleColKeys = _ecWorkingState.visibleColKeys.filter(k => k !== key);
+  renderEditColumnsPanel();
+}
+
+// ── Add Port field modal ──────────────────────────────────────
+function openAddPortModal() {
+  document.getElementById('add-port-name').value = '';
+  document.getElementById('add-port-type').value = 'number';
+  document.getElementById('add-port-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('add-port-name').focus(), 50);
+}
+
+function closeAddPortModal() {
+  document.getElementById('add-port-modal').style.display = 'none';
+}
+
+function confirmAddPort() {
+  const label = document.getElementById('add-port-name').value.trim();
+  if (!label) return;
+  const key = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+  if (!key) return;
+  if (_ecWorkingState.dynamicCols.some(c => c.key === key)) return;
+  _ecWorkingState.dynamicCols.push({ key, label });
+  _ecWorkingState.visibleColKeys.push(key);
+  SAMPLE.productEdit.ordering.rows.forEach(r => { r[key] = ''; });
+  closeAddPortModal();
+  renderEditColumnsPanel();
+}
+
+// ── Ordering table render ─────────────────────────────────────
+function renderOrderingTable() {
   const tbl = document.getElementById('ordering-table');
   if (!tbl) return;
-  const { dynamicCols, rows } = SAMPLE.productEdit.ordering;
+  const { dynamicCols, visibleColKeys, rows } = SAMPLE.productEdit.ordering;
+  const allColDefs = [...BASE_ORDERING_COLS, ...(dynamicCols || [])];
+  const keys = visibleColKeys || allColDefs.map(c => c.key);
+  const visibleCols = keys.map(k => allColDefs.find(c => c.key === k)).filter(Boolean);
+  const baseKeys = _BASE_KEYS();
 
-  // thead — 固定欄不含刪除鈕；動態欄名稱只顯示，管理在上方 Ports Settings
   tbl.querySelector('thead tr').innerHTML =
-    BASE_ORDERING_COLS.map(c => `<th>${c.label}</th>`).join('') +
-    (dynamicCols || []).map(c => `<th>${c.label}</th>`).join('') +
+    visibleCols.map(c => `<th>${c.label}</th>`).join('') +
     '<th style="width:60px">操作</th>';
 
-  // tbody
   const tbody = tbl.querySelector('tbody');
-  const colCount = BASE_ORDERING_COLS.length + (dynamicCols || []).length + 1;
+  const colCount = visibleCols.length + 1;
   if (!rows || rows.length === 0) {
     tbody.innerHTML = `<tr><td colspan="${colCount}">
       <div class="empty-state" style="padding:32px"><div class="empty-state-text">尚無訂購資訊，點擊「新增 P/N」開始建立</div></div>
@@ -983,25 +1097,13 @@ function renderOrderingTable() {
   }
   tbody.innerHTML = rows.map((r, i) =>
     `<tr>
-      ${BASE_ORDERING_COLS.map(c =>
-        `<td><input class="form-input" type="text" value="${r[c.key] || ''}" style="min-width:${c.width}" /></td>`
-      ).join('')}
-      ${(dynamicCols || []).map(c =>
-        `<td><input class="form-input" type="text" value="${r[c.key] !== undefined ? r[c.key] : ''}" style="width:90px;text-align:center" /></td>`
-      ).join('')}
+      ${visibleCols.map(c => {
+        const isBase = baseKeys.includes(c.key);
+        return `<td><input class="form-input" type="text" value="${r[c.key] !== undefined ? r[c.key] : ''}" style="min-width:${c.width || '90px'}${isBase ? '' : ';text-align:center'}" /></td>`;
+      }).join('')}
       <td><div class="col-actions"><button class="btn btn-sm btn-danger" onclick="removeOrderingRow(${i})">刪除</button></div></td>
     </tr>`
   ).join('');
-}
-
-function addOrderingPort() {
-  const label = prompt('輸入 Port 欄位名稱（例：COM Port、DIO）');
-  if (!label || !label.trim()) return;
-  const key = label.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-  const ord = SAMPLE.productEdit.ordering;
-  if (ord.dynamicCols.some(c => c.key === key)) return;
-  ord.dynamicCols.push({ key, label: label.trim() });
-  renderOrderingTable();
 }
 
 function addOrderingRow() {
@@ -1014,12 +1116,6 @@ function addOrderingRow() {
 
 function removeOrderingRow(index) {
   SAMPLE.productEdit.ordering.rows.splice(index, 1);
-  renderOrderingTable();
-}
-
-function removeOrderingCol(key) {
-  const ord = SAMPLE.productEdit.ordering;
-  ord.dynamicCols = ord.dynamicCols.filter(c => c.key !== key);
   renderOrderingTable();
 }
 
@@ -2413,18 +2509,21 @@ function initLogs() {
       <tr>
         <td>${l.user}</td>
         <td>${l.module}</td>
+        <td style="font-size:12px;color:var(--text-2)">${l.page}</td>
         <td>${actionBadge(l.action)}</td>
-        <td style="font-size:12px">${l.desc}</td>
+        <td style="font-size:12px"><strong>${l.target}</strong></td>
         <td style="color:var(--text-3);font-size:12px;white-space:nowrap">${l.time}</td>
       </tr>`).join('');
   }
   if (errorTbody) {
     errorTbody.innerHTML = SAMPLE.errorLogs.map(l => `
       <tr>
-        <td>${errorTypeBadge(l.type)}</td>
-        <td>${l.module}</td>
-        <td style="font-size:12px;color:var(--text-2)">${l.msg}</td>
         <td>${l.user}</td>
+        <td>${l.module}</td>
+        <td style="font-size:12px;color:var(--text-2)">${l.source}</td>
+        <td style="font-size:12px"><strong>${l.target}</strong></td>
+        <td>${errorTypeBadge(l.type)}</td>
+        <td style="font-size:12px;color:var(--text-2)">${l.msg}</td>
         <td style="color:var(--text-3);font-size:12px;white-space:nowrap">${l.time}</td>
       </tr>`).join('');
   }

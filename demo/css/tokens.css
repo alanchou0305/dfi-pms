@@ -1,0 +1,36 @@
+/* ============================================================
+   DFI PMS Demo — Design Tokens + Reset
+   ============================================================ */
+
+/* --- Design Tokens --- */
+:root {
+  --primary:      #1E3A5F;
+  --accent:       #2D6BE4;
+  --accent-light: #EEF2FF;
+  --bg:           #FFFFFF;
+  --sidebar-bg:   #F8F9FA;
+  --border:       #E5E7EB;
+  --text:         #111827;
+  --text-2:       #6B7280;
+  --text-3:       #9CA3AF;
+  --hover-bg:     #F3F4F6;
+  --danger:       #EF4444;
+  --success:      #22C55E;
+  --warning:      #F59E0B;
+  --radius:       6px;
+  --radius-lg:    10px;
+  --shadow:       0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:    0 4px 12px rgba(0,0,0,.1);
+  --sidebar-w:    240px;
+  --topbar-h:     60px;
+  --font:         'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* --- Reset --- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: var(--font); color: var(--text); background: var(--bg); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+button, input, select, textarea { font-family: inherit; font-size: inherit; }
+ul, ol { list-style: none; }
+img { display: block; max-width: 100%; }

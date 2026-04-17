@@ -1,0 +1,82 @@
+/* ============================================================
+   DFI PMS Demo — Category Tree Styles
+   ============================================================ */
+
+/* ============================================================
+   CATEGORY TREE
+   ============================================================ */
+.cat-tree {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.cat-node { background: var(--bg); }
+.cat-parent { border-bottom: 1px solid var(--border); }
+.cat-parent:last-child { border-bottom: none; }
+.cat-node-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: default;
+  transition: background .1s;
+}
+.cat-node-row:hover { background: var(--hover-bg); }
+.cat-parent > .cat-node-row { font-weight: 500; }
+.cat-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+  color: var(--text-3);
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.cat-toggle:hover { color: var(--text); }
+.cat-toggle-spacer { width: 16px; flex-shrink: 0; }
+.cat-icon { flex-shrink: 0; color: var(--accent); }
+.cat-icon-sub { color: var(--text-3); }
+.cat-name { flex: 1; font-size: 13px; }
+.cat-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.cat-children {
+  border-top: 1px solid var(--border);
+  background: #FAFBFC;
+}
+.cat-children .cat-node {
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+.cat-children .cat-node:last-child { border-bottom: none; }
+.cat-children .cat-node-row { padding-left: 44px; }
+/* Add-category type cards */
+.cat-type-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  text-align: center;
+}
+.cat-type-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+.cat-type-card svg { color: var(--accent); }
+.cat-type-label { font-weight: 600; font-size: 14px; }
+.cat-type-desc { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+
+/* DnD */
+.cat-node.dragging { opacity: 0.35; }
+.cat-node.drag-over > .cat-node-row {
+  box-shadow: inset 0 2px 0 var(--accent);
+  background: var(--accent-light);
+}

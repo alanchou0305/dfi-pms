@@ -422,11 +422,11 @@ export const SAMPLE = {
   },
 
   files: [
-    { name: 'EC70A-SU Datasheet v1.2',       category: 'Datasheet',         type: 'PDF', product: 'EC70A-SU',      partner: false, updated: '2026-04-01' },
-    { name: 'EC551-CR Quick Start Guide',     category: 'Quick Start Guide', type: 'PDF', product: 'EC551-CR',      partner: false, updated: '2026-03-15' },
-    { name: 'IPC900-519-FL User Manual',      category: 'User Manual',       type: 'PDF', product: 'IPC900-519-FL', partner: false, updated: '2026-02-20' },
-    { name: 'EC70A-SU BIOS v1.3.2',           category: 'BIOS / Driver',     type: 'ZIP', product: 'EC70A-SU',      partner: true,  updated: '2026-04-12' },
-    { name: 'DFI Embedded Product Catalog Q2 2026', category: 'Brochure',   type: 'PDF', product: '—',             partner: false, updated: '2026-03-01' },
+    { name: 'EC70A-SU Datasheet v1.2',            mainCategory: '文件資料', subCategory: 'Datasheet',         type: 'PDF', status: '啟用', updated: '2026-04-01' },
+    { name: 'EC551-CR Quick Start Guide',          mainCategory: '文件資料', subCategory: 'Quick Start Guide', type: 'PDF', status: '啟用', updated: '2026-03-15' },
+    { name: 'IPC900-519-FL User Manual',           mainCategory: '文件資料', subCategory: 'User Manual',       type: 'PDF', status: '停用', updated: '2026-02-20' },
+    { name: 'EC70A-SU BIOS v1.3.2',               mainCategory: '軟體驅動', subCategory: 'BIOS / Driver',     type: 'ZIP', status: '啟用', updated: '2026-04-12' },
+    { name: 'DFI Embedded Product Catalog Q2 2026', mainCategory: '行銷素材', subCategory: 'Brochure',        type: 'PDF', status: '啟用', updated: '2026-03-01' },
   ],
 
   fileCategories: [

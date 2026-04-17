@@ -107,14 +107,25 @@
 }
 .search-input input::placeholder { color: var(--text-3); }
 .filter-select {
-  padding: 6px 12px;
+  appearance: none;
+  padding: 6px 28px 6px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--bg);
+  background: var(--bg) url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239CA3AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center;
   color: var(--text);
   font-size: 13px;
   cursor: pointer;
   outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.filter-select:hover { border-color: #9CA3AF; }
+.filter-select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
+.filter-select.active { border-color: var(--accent); color: var(--accent); background-color: var(--accent-light); }
+.filter-divider {
+  width: 1px; height: 20px;
+  background: var(--border);
+  flex-shrink: 0;
+  align-self: center;
 }
 .toolbar-right { margin-left: auto; display: flex; gap: 8px; }
 
@@ -195,6 +206,29 @@ tbody tr:hover { background: #FAFAFA; }
 .badge-neutral { background: #F3F4F6; color: var(--text-2); }
 .badge-warning { background: #FEF3C7; color: #D97706; }
 .badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+.status-capsule { display: inline-flex; cursor: pointer; user-select: none; }
+.status-capsule input { position: absolute; opacity: 0; width: 0; height: 0; }
+.status-capsule-pill {
+  position: relative;
+  width: 40px; height: 22px;
+  border-radius: 11px;
+  background: #D1D5DB;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.status-capsule-pill::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  transition: transform .2s;
+}
+.status-capsule input:checked + .status-capsule-pill { background: var(--accent); }
+.status-capsule input:checked + .status-capsule-pill::after { transform: translateX(18px); }
 
 /* Lang status dots */
 .lang-dots { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }

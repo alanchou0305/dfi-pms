@@ -120,20 +120,25 @@ export function initFiles() {
   tbody.innerHTML = SAMPLE.files.map(f => `
     <tr>
       <td><strong>${f.name}</strong></td>
-      <td>${f.category}</td>
+      <td style="font-size:12px">${f.mainCategory}</td>
+      <td style="font-size:12px">${f.subCategory}</td>
       <td>${typeBadge(f.type)}</td>
-      <td style="font-size:12px">${f.product}</td>
-      <td>${f.partner ? '<span class="badge badge-warning">是</span>' : '<span class="badge badge-neutral">否</span>'}</td>
+      <td><label class="status-capsule"><input type="checkbox" ${f.status === '啟用' ? 'checked' : ''}><span class="status-capsule-pill"></span></label></td>
       <td style="color:var(--text-3);font-size:12px;white-space:nowrap">${f.updated}</td>
       <td>${editDeleteBtns('files-edit')}</td>
     </tr>`).join('');
   if (info) info.textContent = `共 ${SAMPLE.files.length} 筆`;
 
-  const catSel = document.querySelectorAll('#view-files select.filter-select')[0];
-  if (catSel) {
-    catSel.innerHTML = '<option value="">全部分類</option>' +
-      SAMPLE.fileCategories.map(c => `<option>${c.name}</option>`).join('');
-  }
+  const mainCats = [...new Set(SAMPLE.files.map(f => f.mainCategory))];
+  const subCats  = [...new Set(SAMPLE.files.map(f => f.subCategory))];
+  const mainSel = document.querySelector('#view-files #filter-main-cat');
+  const subSel  = document.querySelector('#view-files #filter-sub-cat');
+  if (mainSel) mainSel.innerHTML = '<option value="">大分類</option>' + mainCats.map(c => `<option>${c}</option>`).join('');
+  if (subSel)  subSel.innerHTML  = '<option value="">次分類</option>' + subCats.map(c => `<option>${c}</option>`).join('');
+
+  document.querySelectorAll('#view-files .filter-select').forEach(sel => {
+    sel.addEventListener('change', () => sel.classList.toggle('active', sel.value !== ''));
+  });
 }
 
 export function initFilesEdit() {
@@ -145,11 +150,15 @@ export function initFilesEdit() {
     const inp  = grp.querySelector('input');
     const sel  = grp.querySelector('select');
     if (text === '檔案名稱' && inp) inp.value = f.name;
-    if (text === '分類' && sel) {
-      sel.innerHTML = '<option value="">請選擇</option>' +
-        SAMPLE.fileCategories.map(c => `<option${c.name === f.category ? ' selected' : ''}>${c.name}</option>`).join('');
+    if (text === '大分類' && sel) {
+      const mains = [...new Set(SAMPLE.files.map(x => x.mainCategory))];
+      sel.innerHTML = '<option value="">請選擇</option>' + mains.map(m => `<option${m === f.mainCategory ? ' selected' : ''}>${m}</option>`).join('');
     }
-    if (text === '綁定產品' && inp) inp.value = f.product;
+    if (text === '次分類' && sel) {
+      const subs = [...new Set(SAMPLE.files.map(x => x.subCategory))];
+      sel.innerHTML = '<option value="">請選擇</option>' + subs.map(s => `<option${s === f.subCategory ? ' selected' : ''}>${s}</option>`).join('');
+    }
+    if (text === '狀態' && sel) sel.value = f.status;
   });
 }
 

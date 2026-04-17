@@ -514,12 +514,12 @@ const SAMPLE = {
     { user: 'System Admin', module: '帳號管理', action: 'UPDATE', desc: '更新使用者 Tina Huang 角色為 FAE',                 time: '2026-04-08 14:50' },
   ],
 
-  syncLogs: [
-    { type: 'Product Sync', target: 'EC70A-SU → dfi.com',           status: 'success', msg: '同步完成（5 個語系）',          time: '2026-04-15 06:00' },
-    { type: 'Product Sync', target: 'EC551-CR → dfi.com',           status: 'success', msg: '同步完成（3 個語系）',          time: '2026-04-15 06:00' },
-    { type: 'Product Sync', target: 'SD101-D26 → dfi.com',          status: 'fail',    msg: 'Missing TW translation',      time: '2026-04-14 06:01' },
-    { type: 'File Sync',    target: 'EC70A-SU BIOS v1.3.2',         status: 'success', msg: '同步完成',                     time: '2026-04-12 08:30' },
-    { type: 'File Sync',    target: 'IPC900-519-FL User Manual',     status: 'success', msg: '同步完成',                     time: '2026-04-10 09:15' },
+  errorLogs: [
+    { type: 'API 錯誤',  module: '產品管理', msg: 'Failed to sync EC551-CR: upstream timeout (dfi.com /api/products)',   user: 'System',       time: '2026-04-15 06:01' },
+    { type: '驗證失敗',  module: '產品管理', msg: '必填欄位缺失：Short Description（EN）— 產品 SD101-D26',               user: 'Lisa Wang',    time: '2026-04-13 15:22' },
+    { type: '系統錯誤',  module: '檔案管理', msg: 'File upload failed: max size exceeded (52 MB > 50 MB limit)',         user: 'Kevin Lee',    time: '2026-04-12 10:55' },
+    { type: 'API 錯誤',  module: '產品管理', msg: '官網 API timeout（/api/products/SD101-D26），retry 3 次後放棄',       user: 'System',       time: '2026-04-10 06:00' },
+    { type: '驗證失敗',  module: '帳號管理', msg: '密碼格式不符規則（使用者 clin@dfi.com）登入失敗',                     user: 'System Admin', time: '2026-04-08 09:10' },
   ],
 };
 
@@ -556,10 +556,11 @@ function actionBadge(a) {
   return `<span class="badge badge-neutral">${a}</span>`;
 }
 
-function syncStatusBadge(s) {
-  return s === 'success'
-    ? `<span class="badge badge-success"><span class="badge-dot"></span>成功</span>`
-    : `<span class="badge badge-danger"><span class="badge-dot"></span>失敗</span>`;
+function errorTypeBadge(t) {
+  if (t === 'API 錯誤')  return `<span class="badge badge-danger">API 錯誤</span>`;
+  if (t === '驗證失敗')  return `<span class="badge badge-warning">驗證失敗</span>`;
+  if (t === '系統錯誤')  return `<span class="badge badge-neutral">系統錯誤</span>`;
+  return `<span class="badge badge-neutral">${t}</span>`;
 }
 
 function langDotsHtml(langs) {
@@ -2404,19 +2405,9 @@ function initRolesEdit() {
 }
 
 function initLogs() {
-  const syncTbody  = document.querySelector('[data-tab-panel="logs"][data-tab="sync"] .table-wrap tbody');
   const auditTbody = document.querySelector('[data-tab-panel="logs"][data-tab="audit"] .table-wrap tbody');
+  const errorTbody = document.querySelector('[data-tab-panel="logs"][data-tab="error"] .table-wrap tbody');
 
-  if (syncTbody) {
-    syncTbody.innerHTML = SAMPLE.syncLogs.map(l => `
-      <tr>
-        <td>${l.type}</td>
-        <td style="font-size:12px">${l.target}</td>
-        <td>${syncStatusBadge(l.status)}</td>
-        <td style="font-size:12px;color:var(--text-2)">${l.msg}</td>
-        <td style="color:var(--text-3);font-size:12px;white-space:nowrap">${l.time}</td>
-      </tr>`).join('');
-  }
   if (auditTbody) {
     auditTbody.innerHTML = SAMPLE.auditLogs.map(l => `
       <tr>
@@ -2427,11 +2418,22 @@ function initLogs() {
         <td style="color:var(--text-3);font-size:12px;white-space:nowrap">${l.time}</td>
       </tr>`).join('');
   }
-  const modSel = document.querySelectorAll('[data-tab-panel="logs"][data-tab="audit"] select.filter-select')[1];
-  if (modSel) {
-    modSel.innerHTML = '<option value="">全部模組</option>' +
-      ['產品管理', '檔案管理', '帳號管理', '系統管理'].map(m => `<option>${m}</option>`).join('');
+  if (errorTbody) {
+    errorTbody.innerHTML = SAMPLE.errorLogs.map(l => `
+      <tr>
+        <td>${errorTypeBadge(l.type)}</td>
+        <td>${l.module}</td>
+        <td style="font-size:12px;color:var(--text-2)">${l.msg}</td>
+        <td>${l.user}</td>
+        <td style="color:var(--text-3);font-size:12px;white-space:nowrap">${l.time}</td>
+      </tr>`).join('');
   }
+  ['audit', 'error'].forEach(tab => {
+    const modSel = document.querySelectorAll(`[data-tab-panel="logs"][data-tab="${tab}"] select.filter-select`);
+    const last = modSel[modSel.length - 1];
+    if (last) last.innerHTML = '<option>全部模組</option>' +
+      ['產品管理', '檔案管理', '帳號管理', '系統管理'].map(m => `<option>${m}</option>`).join('');
+  });
 }
 
 function initSmtp() {

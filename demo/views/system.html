@@ -95,28 +95,26 @@
   </div>
   <div class="tabs-card">
     <div class="tabs-bar" data-tab-group="logs">
-      <button class="tab-btn active" data-tab="sync">Sync Log</button>
+      <button class="tab-btn active" data-tab="audit">Audit Log</button>
       <button class="tab-btn" data-tab="error">Error Log</button>
-      <button class="tab-btn" data-tab="audit">Audit Log</button>
     </div>
 
-    <!-- Sync Log -->
-    <div class="tab-panel active" data-tab-panel="logs" data-tab="sync">
+    <!-- Audit Log -->
+    <div class="tab-panel active" data-tab-panel="logs" data-tab="audit">
       <div class="toolbar" style="padding:12px 0">
         <div class="search-input">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" placeholder="搜尋..." />
+          <input type="text" placeholder="搜尋操作者 / 模組..." />
         </div>
-        <select class="filter-select"><option>全部狀態</option><option>成功</option><option>失敗</option></select>
+        <select class="filter-select"><option>全部動作</option><option>CREATE</option><option>UPDATE</option><option>DELETE</option></select>
+        <select class="filter-select"><option>全部模組</option></select>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>同步類型</th><th>目標</th><th>狀態</th><th>訊息</th><th>時間</th></tr>
+            <tr><th>操作者</th><th>模組</th><th>動作</th><th>描述</th><th>時間</th></tr>
           </thead>
-          <tbody>
-            <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">🔄</div><div class="empty-state-text">尚無 Sync Log</div></div></td></tr>
-          </tbody>
+          <tbody></tbody>
         </table>
       </div>
     </div>
@@ -136,31 +134,7 @@
           <thead>
             <tr><th>錯誤類型</th><th>模組</th><th>錯誤訊息</th><th>操作者</th><th>時間</th></tr>
           </thead>
-          <tbody>
-            <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">尚無 Error Log</div></div></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Audit Log -->
-    <div class="tab-panel" data-tab-panel="logs" data-tab="audit">
-      <div class="toolbar" style="padding:12px 0">
-        <div class="search-input">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" placeholder="搜尋操作者 / 模組..." />
-        </div>
-        <select class="filter-select"><option>全部動作</option><option>CREATE</option><option>UPDATE</option><option>DELETE</option></select>
-        <select class="filter-select"><option>全部模組</option></select>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>操作者</th><th>模組</th><th>動作</th><th>描述</th><th>時間</th></tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">尚無 Audit Log</div></div></td></tr>
-          </tbody>
+          <tbody></tbody>
         </table>
       </div>
     </div>

@@ -933,112 +933,102 @@ function applyEditColumns() {
 function renderEditColumnsPanel() {
   if (!_ecWorkingState) return;
   const { dynamicCols, visibleColKeys } = _ecWorkingState;
-  const baseKeys = _BASE_KEYS();
+  const el = document.getElementById('ec-single-list');
+  if (!el) return;
 
-  // ── Left panel ────────────────────────────────────────────────
-  const leftEl = document.getElementById('ec-available-list');
-  if (leftEl) {
-    const fixedHtml = `
-      <div class="ec-section-label">固定欄位</div>
-      ${BASE_ORDERING_COLS.map(c => `
-        <div class="ec-col-item ec-col-fixed">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--text-3)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span class="ec-col-name">${c.label}</span>
-        </div>`).join('')}`;
+  const lockIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--text-3)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+  const trashIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+  const dragIcon = `<svg width="10" height="14" viewBox="0 0 10 16" fill="none"><circle cx="3" cy="3" r="1.1" fill="currentColor"/><circle cx="7" cy="3" r="1.1" fill="currentColor"/><circle cx="3" cy="8" r="1.1" fill="currentColor"/><circle cx="7" cy="8" r="1.1" fill="currentColor"/><circle cx="3" cy="13" r="1.1" fill="currentColor"/><circle cx="7" cy="13" r="1.1" fill="currentColor"/></svg>`;
 
-    const portHtml = `
-      <div class="ec-section-label" style="margin-top:12px">Port 欄位</div>
-      ${dynamicCols.length === 0
-        ? `<div class="ec-list-empty">尚無 Port 欄位，點擊「新增 Port 欄位」建立</div>`
-        : dynamicCols.map(c => {
-            const isVisible = visibleColKeys.includes(c.key);
-            return `
-              <div class="ec-col-item ec-col-port">
-                <span class="ec-col-name">${c.label}</span>
-                <div class="ec-col-actions">
-                  ${isVisible
-                    ? `<span class="ec-col-badge-on">顯示中</span>`
-                    : `<button class="ec-col-add-btn" onclick="ecAddPortToVisible('${c.key}')">+ 加入</button>`}
-                  <button class="ec-col-del-btn" onclick="ecDeletePortSchema('${c.key}')" title="從 schema 中移除">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                  </button>
-                </div>
-              </div>`;
-          }).join('')}`;
+  // Fixed section
+  const fixedHtml = `
+    <div class="ec-section-label">固定欄位</div>
+    ${BASE_ORDERING_COLS.map(c => `
+      <div class="ec-col-item ec-col-fixed">
+        ${lockIcon}
+        <span class="ec-col-name">${c.label}</span>
+      </div>`).join('')}`;
 
-    leftEl.innerHTML = fixedHtml + portHtml;
-  }
+  // Port section
+  const portHtml = `
+    <div class="ec-section-header">
+      <span class="ec-section-label" style="margin:0">Port 欄位</span>
+      <button class="btn btn-sm btn-secondary" onclick="openAddPortModal()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增
+      </button>
+    </div>
+    ${dynamicCols.length === 0
+      ? `<div class="ec-list-empty">尚無 Port 欄位，點擊「新增」建立</div>`
+      : dynamicCols.map(c => {
+          const isVisible = visibleColKeys.includes(c.key);
+          return `
+            <div class="ec-col-item ec-col-port" draggable="true" data-key="${c.key}">
+              <span class="ec-col-drag" title="拖曳排序">${dragIcon}</span>
+              <input type="checkbox" class="ec-col-check" ${isVisible ? 'checked' : ''}
+                onchange="ecTogglePortVisible('${c.key}', this.checked)" />
+              <span class="ec-col-name">${c.label}</span>
+              <button class="ec-col-del-btn" onclick="ecDeletePortSchema('${c.key}')" title="從 schema 中移除">${trashIcon}</button>
+            </div>`;
+        }).join('')}`;
 
-  // ── Right panel ───────────────────────────────────────────────
-  const rightEl = document.getElementById('ec-selected-list');
-  if (rightEl) {
-    const allColDefs = [...BASE_ORDERING_COLS, ...dynamicCols];
-    const visibleCols = visibleColKeys.map(k => allColDefs.find(c => c.key === k)).filter(Boolean);
-    rightEl.innerHTML = visibleCols.map(c => {
-      const isFixed = baseKeys.includes(c.key);
-      return `
-        <div class="ec-sel-item${isFixed ? ' ec-sel-fixed' : ''}" draggable="true" data-key="${c.key}">
-          <span class="ec-sel-drag">
-            <svg width="10" height="14" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="3" cy="3" r=".8" fill="currentColor" stroke="none"/><circle cx="7" cy="3" r=".8" fill="currentColor" stroke="none"/><circle cx="3" cy="8" r=".8" fill="currentColor" stroke="none"/><circle cx="7" cy="8" r=".8" fill="currentColor" stroke="none"/><circle cx="3" cy="13" r=".8" fill="currentColor" stroke="none"/><circle cx="7" cy="13" r=".8" fill="currentColor" stroke="none"/></svg>
-          </span>
-          <span class="ec-sel-name">${c.label}</span>
-          ${isFixed
-            ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ec-sel-lock"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`
-            : `<button class="ec-sel-remove" onclick="ecRemovePortFromVisible('${c.key}')" title="從顯示欄移除">×</button>`}
-        </div>`;
-    }).join('');
-    setupEcRightDnD();
-  }
+  el.innerHTML = fixedHtml + portHtml;
+  setupEcPortDnD();
 }
 
-function setupEcRightDnD() {
-  const container = document.getElementById('ec-selected-list');
+function setupEcPortDnD() {
+  const container = document.getElementById('ec-single-list');
   if (!container) return;
-  container.querySelectorAll('.ec-sel-item').forEach(item => {
+  container.querySelectorAll('.ec-col-port[draggable]').forEach(item => {
     item.addEventListener('dragstart', e => {
       _ecDragKey = item.dataset.key;
-      item.classList.add('ec-sel-dragging');
+      item.classList.add('port-dragging');
       e.dataTransfer.effectAllowed = 'move';
     });
     item.addEventListener('dragend', () => {
       _ecDragKey = null;
-      item.classList.remove('ec-sel-dragging');
-      container.querySelectorAll('.ec-sel-item').forEach(t => t.classList.remove('ec-sel-drag-over'));
+      item.classList.remove('port-dragging');
+      container.querySelectorAll('.ec-col-port').forEach(t => t.classList.remove('port-drag-over'));
     });
     item.addEventListener('dragover', e => {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
-      container.querySelectorAll('.ec-sel-item').forEach(t => t.classList.remove('ec-sel-drag-over'));
-      if (item.dataset.key !== _ecDragKey) item.classList.add('ec-sel-drag-over');
+      container.querySelectorAll('.ec-col-port').forEach(t => t.classList.remove('port-drag-over'));
+      if (item.dataset.key !== _ecDragKey) item.classList.add('port-drag-over');
     });
-    item.addEventListener('dragleave', () => item.classList.remove('ec-sel-drag-over'));
+    item.addEventListener('dragleave', () => item.classList.remove('port-drag-over'));
     item.addEventListener('drop', e => {
       e.preventDefault();
       const targetKey = item.dataset.key;
       if (!_ecDragKey || _ecDragKey === targetKey) return;
-      const vk = _ecWorkingState.visibleColKeys;
-      const fromIdx = vk.indexOf(_ecDragKey);
-      const toIdx = vk.indexOf(targetKey);
+      const dc = _ecWorkingState.dynamicCols;
+      const fromIdx = dc.findIndex(c => c.key === _ecDragKey);
+      const toIdx   = dc.findIndex(c => c.key === targetKey);
       if (fromIdx === -1 || toIdx === -1) return;
-      const [moved] = vk.splice(fromIdx, 1);
-      vk.splice(toIdx, 0, moved);
+      const [moved] = dc.splice(fromIdx, 1);
+      dc.splice(toIdx, 0, moved);
+      // Mirror the reorder in visibleColKeys for any visible port cols
+      const vk = _ecWorkingState.visibleColKeys;
+      const baseKeys = _BASE_KEYS();
+      const fromVk = vk.indexOf(_ecDragKey);
+      const toVk   = vk.indexOf(targetKey);
+      if (fromVk !== -1 && toVk !== -1) {
+        const [movedKey] = vk.splice(fromVk, 1);
+        vk.splice(toVk, 0, movedKey);
+      }
       _ecDragKey = null;
       renderEditColumnsPanel();
     });
   });
 }
 
-function ecAddPortToVisible(key) {
-  if (!_ecWorkingState.visibleColKeys.includes(key)) {
-    _ecWorkingState.visibleColKeys.push(key);
-    renderEditColumnsPanel();
+function ecTogglePortVisible(key, checked) {
+  const vk = _ecWorkingState.visibleColKeys;
+  if (checked && !vk.includes(key)) {
+    vk.push(key);
+  } else if (!checked) {
+    _ecWorkingState.visibleColKeys = vk.filter(k => k !== key);
   }
-}
-
-function ecRemovePortFromVisible(key) {
-  if (_BASE_KEYS().includes(key)) return;
-  _ecWorkingState.visibleColKeys = _ecWorkingState.visibleColKeys.filter(k => k !== key);
-  renderEditColumnsPanel();
 }
 
 function ecDeletePortSchema(key) {

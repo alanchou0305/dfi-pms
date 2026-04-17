@@ -5,14 +5,21 @@ DFI 內部產品管理系統（Product Management System）的規劃文件庫。
 ## 文件結構
 
 ```
-├── docs/
-│   ├── requirements-v1.0.pdf   # 需求規格書 v1.0
-│   └── database-schema.md      # 資料庫 Schema（42 張表）
-├── sitemap/
-│   ├── sitemap.csv             # 頁面路由與說明
-│   └── sitemap.xml             # FlowMapp Sitemap XML
-└── planning/
-    └── page-tracking.csv       # 頁面設計 / 開發 / QA 進度追蹤
+├── demo/                        # 互動式 HTML 原型
+│   ├── index.html
+│   ├── js/
+│   ├── css/
+│   └── views/
+└── docs/
+    ├── requirements/
+    │   └── requirements-v1.0.pdf   # 需求規格書 v1.0
+    ├── database/
+    │   └── database-schema.md      # 資料庫 Schema（42 張表）
+    ├── sitemap/
+    │   ├── sitemap.csv             # 頁面路由與說明
+    │   └── sitemap.xml             # FlowMapp Sitemap XML
+    └── planning/
+        └── page-tracking.csv       # 頁面設計 / 開發 / QA 進度追蹤
 ```
 
 ## 模組總覽

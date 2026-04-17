@@ -60,10 +60,10 @@
 |--------|------|-------------|-------------|
 | id | BIGINT | PK, AUTO_INCREMENT | |
 | account_id | INT | FK → accounts.id | 操作者 |
-| action_type | ENUM | NOT NULL | CREATE / UPDATE / DELETE |
+| action_type | ENUM | NOT NULL | CREATE / UPDATE / DELETE / PUBLISH / UNPUBLISH |
+| item_type | ENUM | NOT NULL | Product / File / Account / Setting |
 | module | VARCHAR(100) | NOT NULL | 操作模組，如 products |
 | target_id | INT | | 被操作的記錄 ID |
-| description | TEXT | | 操作摘要 |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 操作時間 |
 
 ---
@@ -363,6 +363,7 @@ Tag 多語系內容
 | id | INT | PK, AUTO_INCREMENT | |
 | product_id | INT | FK → products.id | |
 | category_id | INT | FK → product_categories.id | |
+| sort_order | INT | NOT NULL, DEFAULT 0 | 次分類在該產品頁的顯示排序（拖曳設定） |
 | UNIQUE | | (product_id, category_id) | |
 
 ---
@@ -457,6 +458,9 @@ Tag 多語系內容
 | product_id | INT | FK → products.id | |
 | language_id | INT | FK → languages.id | |
 | language_status | TINYINT(1) | NOT NULL, DEFAULT 0 | 決定前台該語系顯示與否 |
+| publish_status | ENUM | NOT NULL, DEFAULT 'draft' | 該語系的發布狀態：draft / pending / published / needs_update |
+| hubspot_page_id | VARCHAR(100) | NULLABLE | 對應 HubSpot 頁面 ID（by language variant） |
+| last_published_at | DATETIME | NULLABLE | 最後一次發布至 HubSpot 的時間 |
 | product_feature | TEXT | | 產品特色列點（JSON Array 或換行分隔） |
 | overview_highlight | LONGTEXT | | 產品特點（Rich Text） |
 | slug | VARCHAR(255) | | 若空則以 model_name 為預設 |

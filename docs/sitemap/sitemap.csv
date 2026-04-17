@@ -8,7 +8,7 @@ Dashboard,頁面,/dashboard,
 語系管理,頁面,/system/languages,管理 EN / TW / CN / JP / DE 啟用狀態
 系統設定,頁面,/system/settings,SMTP 等底層參數設定
 規格欄位管理,頁面,/system/spec-fields,定義 Spec Group / Spec Field 並綁定大分類；Admin 層級才操作
-操作記錄,頁面,/system/logs,所有 CREATE / UPDATE / DELETE 操作記錄
+操作記錄,頁面,/system/logs,所有 CREATE / UPDATE / DELETE / PUBLISH / UNPUBLISH 操作記錄；列表含全選 checkbox（無批次功能）；Filter 含 action_type / item_type / 建立時間區間
 角色管理,頁面,/accounts/roles,定義 Admin / PM / MKT / Designer / FAE 與 Read / Write 權限矩陣
 帳號管理,頁面,/accounts/users,Microsoft SSO 帳號新增與停用
 產品總覽,頁面,/products,資料夾式 Listing（大分類 > 次分類 > 產品）；主入口

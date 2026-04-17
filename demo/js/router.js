@@ -34,9 +34,9 @@ const ROUTES = {
   'users-edit':            { crumb: ['帳號管理', '使用者', '使用者編輯'],         nav: 'nav-users',               group: 'grp-accounts' },
   'roles':                 { crumb: ['帳號管理', '角色權限'],                    nav: 'nav-roles',               group: 'grp-accounts' },
   'roles-edit':            { crumb: ['帳號管理', '角色權限', '角色編輯'],         nav: 'nav-roles',               group: 'grp-accounts' },
-  'languages':             { crumb: ['系統管理', '語系'],                        nav: 'nav-languages',           group: 'grp-system' },
-  'languages-edit':        { crumb: ['系統管理', '語系', '語系編輯'],             nav: 'nav-languages',           group: 'grp-system' },
-  'logs':                  { crumb: ['系統管理', '操作記錄'],                    nav: 'nav-logs',                group: 'grp-system' },
+  'languages':             { crumb: ['系統管理', '語系管理'],                    nav: 'nav-languages',           group: 'grp-system' },
+  'languages-edit':        { crumb: ['系統管理', '語系管理', '語系編輯'],         nav: 'nav-languages',           group: 'grp-system' },
+  'logs':                  { crumb: ['系統管理', '系統日誌'],                    nav: 'nav-logs',                group: 'grp-system' },
 };
 
 const AUTH_VIEWS = ['login', '403', '404'];

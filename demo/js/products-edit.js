@@ -81,25 +81,32 @@ export function initProductEdit() {
     const skuData = JSON.parse(JSON.stringify(d.skuSpecs));
 
     function renderSkuSpecsTable() {
-      const skus   = skuData.skus;
-      const groups = skuData.groups;
-      const canAdd = skus.length < 4;
+      const skus     = skuData.skus;
+      const groups   = skuData.groups;
+      const canAdd   = skus.length < 4;
       const colCount = skus.length + 1;
 
-      const skuHeaders = skus.map((sku, si) => `
-        <th class="sku-data-col sku-header-cell">
-          ${skus.length > 1 ? `<button class="sku-col-delete" onclick="deleteSku(${si})" title="移除此 SKU">×</button>` : ''}
-          <input class="sku-header-pn" type="text" value="${sku.pn}"
-            oninput="skuData.skus[${si}].pn=this.value" />
-        </th>`).join('');
+      const skuHeaders = skus.map((sku, si) => {
+        const inactive = !sku.name || !sku.name.trim();
+        return `<th class="sku-data-col sku-header-cell${inactive ? ' sku-col-inactive' : ''}">
+          ${skus.length > 1 ? `<button class="sku-col-delete" onclick="deleteSku(${si})" title="移除此欄">×</button>` : ''}
+          <input class="sku-header-pn" type="text" value="${(sku.name || '').replace(/"/g,'&quot;')}"
+            placeholder="配置名稱"
+            oninput="skuData.skus[${si}].name=this.value;setColActive(${si},!!this.value.trim())" />
+        </th>`;
+      }).join('');
 
       const bodyRows = groups.map((grp, gi) => {
         const groupRow = `<tr class="sku-group-row"><td colspan="${colCount}">${grp.group}</td></tr>`;
         const fieldRows = grp.fields.map((f, fi) => {
-          const cells = skus.map((_, si) => {
+          const cells = skus.map((sku, si) => {
+            const inactive = !sku.name || !sku.name.trim();
             const val = (f.values && f.values[si] != null) ? f.values[si] : '';
-            return `<td><input class="spec-cell-input" type="text" value="${val.replace(/"/g, '&quot;')}"
-              oninput="skuData.groups[${gi}].fields[${fi}].values[${si}]=this.value" /></td>`;
+            return `<td class="${inactive ? 'sku-cell-inactive' : ''}">
+              <input class="spec-cell-input" type="text" value="${val.replace(/"/g,'&quot;')}"
+                ${inactive ? 'disabled placeholder="—"' : ''}
+                oninput="skuData.groups[${gi}].fields[${fi}].values[${si}]=this.value" />
+            </td>`;
           }).join('');
           return `<tr><td class="sku-label-cell">${f.label}</td>${cells}</tr>`;
         }).join('');
@@ -107,36 +114,60 @@ export function initProductEdit() {
       }).join('');
 
       specsPanel.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-secondary">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Excel 批次匯入
-            </button>
-            <button class="btn btn-secondary">技術文件上傳</button>
-          </div>
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:16px">
+          <button class="btn btn-secondary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Excel 批次匯入
+          </button>
           ${canAdd ? `<button class="btn btn-primary" onclick="addSku()">＋ 新增 SKU</button>` : ''}
         </div>
         <div class="sku-compare-wrap">
           <table class="sku-compare-table">
             <thead>
               <tr>
-                <th class="sku-label-col" style="padding:10px 10px;font-size:12px;color:var(--text-2);font-weight:600">規格項目</th>
+                <th class="sku-label-col" style="padding:10px;font-size:12px;color:var(--text-2);font-weight:600">規格項目</th>
                 ${skuHeaders}
               </tr>
             </thead>
             <tbody>${bodyRows}</tbody>
           </table>
+        </div>
+
+        <div class="divider" style="margin:28px 0 20px"></div>
+        <div class="tab-section-title" style="margin-bottom:14px">技術文件 <em style="font-size:11px;font-weight:400;color:var(--text-3);margin-left:6px">全語系共用</em></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          ${['Datasheet', 'Block Diagram', 'Mechanical Drawing'].map(label => `
+            <div>
+              <div style="font-size:13px;font-weight:500;margin-bottom:8px">${label}</div>
+              <div class="upload-zone" style="padding:24px 16px">
+                <div class="upload-zone-icon">📄</div>
+                <div style="font-size:13px">點擊或拖曳上傳 PDF</div>
+              </div>
+            </div>`).join('')}
         </div>`;
 
-      window.skuData    = skuData;
-      window.addSku     = addSku;
-      window.deleteSku  = deleteSku;
+      window.skuData   = skuData;
+      window.addSku    = addSku;
+      window.deleteSku = deleteSku;
+      window.setColActive = setColActive;
+    }
+
+    function setColActive(si, active) {
+      const headers = specsPanel.querySelectorAll('.sku-header-cell');
+      if (headers[si]) headers[si].classList.toggle('sku-col-inactive', !active);
+      specsPanel.querySelectorAll('tbody tr').forEach(row => {
+        if (row.classList.contains('sku-group-row')) return;
+        const cell = row.querySelectorAll('td')[si + 1];
+        if (!cell) return;
+        cell.classList.toggle('sku-cell-inactive', !active);
+        const inp = cell.querySelector('input');
+        if (inp) { inp.disabled = !active; inp.placeholder = active ? '' : '—'; }
+      });
     }
 
     function addSku() {
       if (skuData.skus.length >= 4) return;
-      skuData.skus.push({ pn: '', desc: '' });
+      skuData.skus.push({ name: '' });
       skuData.groups.forEach(g => g.fields.forEach(f => {
         if (!f.values) f.values = [];
         f.values.push('');

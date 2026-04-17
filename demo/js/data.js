@@ -344,9 +344,9 @@ export const SAMPLE = {
     },
     skuSpecs: {
       skus: [
-        { pn: 'EC70A-SU-0001', desc: 'Core i7-1185G7E' },
-        { pn: 'EC70A-SU-0002', desc: 'Core i5-1145G7E' },
-        { pn: 'EC70A-SU-0003', desc: 'Core i3-1115G4E' },
+        { name: 'EC70A-SU' },
+        { name: 'EC70A-SU-i5' },
+        { name: 'EC70A-SU-i3' },
       ],
       groups: [
         { group: 'General', fields: [

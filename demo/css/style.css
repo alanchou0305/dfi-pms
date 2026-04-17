@@ -897,6 +897,11 @@ select.form-input { cursor: pointer; }
 }
 .sku-header-cell:hover .sku-col-delete { opacity: 1; }
 .sku-col-delete:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
+.sku-col-inactive { background: var(--sidebar-bg); }
+.sku-col-inactive .sku-header-pn { color: var(--text-3); font-weight: 400; }
+.sku-cell-inactive { background: var(--sidebar-bg); }
+.sku-cell-inactive .spec-cell-input { color: var(--text-3); cursor: not-allowed; }
+.sku-header-pn::placeholder { color: var(--text-3); font-weight: 400; }
 
 /* ============================================================
    DRAG REORDER

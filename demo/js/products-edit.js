@@ -12,6 +12,7 @@ let _currentLang        = 'en';
 let _pendingDisableLang = null;
 let _prodReturnSection  = 'info';
 let _dirtyLangs         = new Set();
+let _imageGroups        = [{ alt: '', desktop: null, tablet: null, mobile: null, errors: {} }];
 
 // ── Ordering columns ─────────────────────────────────────────
 const BASE_ORDERING_COLS = [
@@ -59,6 +60,8 @@ export function initProductEdit() {
   }
 
   renderWebContentTabs();
+  _imageGroups = [{ alt: '', desktop: null, tablet: null, mobile: null, errors: {} }];
+  renderImagesPanel();
 
   _prodPrimaryParent = d.primaryParent || '';
   _prodPrimarySub    = d.primarySub    || '';
@@ -191,6 +194,168 @@ export function initProductEdit() {
 
   _prodRelations = JSON.parse(JSON.stringify(d.relations));
   renderRelations();
+}
+
+// ── Images panel ─────────────────────────────────────────────
+
+function renderImagesPanel() {
+  const panel = document.querySelector('[data-tab-panel="prod-edit"][data-tab="images"]');
+  if (!panel) return;
+
+  const dragHandleSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+  </svg>`;
+
+  const plusSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>`;
+
+  function uploadZoneHtml(i, field, label) {
+    const g = _imageGroups[i];
+    const hasFile = !!g[field];
+    const err = g.errors && g.errors[field];
+    return `
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="form-label" style="margin:0">
+          ${label}<span class="required-star">*</span>
+        </div>
+        <div class="upload-zone img-upload-zone${hasFile ? ' has-file' : ''}${err ? ' is-invalid' : ''}"
+          onclick="toggleImageMock(${i},'${field}')">
+          ${hasFile
+            ? `<div style="font-size:18px;margin-bottom:4px">✅</div>
+               <div style="font-size:11px;color:var(--text-2);word-break:break-all;margin-bottom:6px">${g[field]}</div>
+               <button class="btn btn-sm btn-danger" style="font-size:11px;padding:2px 8px"
+                 onclick="event.stopPropagation();clearImageField(${i},'${field}')">移除</button>`
+            : `<div style="font-size:20px;margin-bottom:4px">🖼</div>
+               <div style="font-size:12px">點擊或拖曳上傳</div>
+               <div style="font-size:11px;color:var(--text-3);margin-top:2px">JPG / PNG / WebP</div>`
+          }
+        </div>
+        ${err ? `<div class="field-error">⚠ ${err}</div>` : ''}
+      </div>`;
+  }
+
+  const groupsHtml = _imageGroups.map((g, i) => {
+    const altErr = g.errors && g.errors.alt;
+    return `
+      <div class="image-group-card" data-group-idx="${i}" draggable="true">
+        <div class="image-group-header">
+          <span class="drag-handle" title="拖曳排序">${dragHandleSvg}</span>
+          <span class="image-group-title">圖片群組 ${i + 1}</span>
+          ${_imageGroups.length > 1
+            ? `<button class="btn btn-sm btn-danger" onclick="removeImageGroup(${i})">移除</button>`
+            : ''}
+        </div>
+        <div class="image-group-body">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
+            ${uploadZoneHtml(i, 'desktop', 'Image – Desktop')}
+            ${uploadZoneHtml(i, 'tablet',  'Image – Tablet')}
+            ${uploadZoneHtml(i, 'mobile',  'Image – Mobile')}
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              Image Alt Text<span class="required-star">*</span>
+              <span class="form-label-hint">替代文字，有助 SEO 與無障礙存取</span>
+            </label>
+            <input class="form-input${altErr ? ' is-invalid' : ''}" type="text"
+              value="${g.alt.replace(/"/g, '&quot;')}"
+              placeholder="例如：DFI EC700-AL 工業電腦正面圖"
+              oninput="_imageGroups[${i}].alt=this.value;clearImgErr(${i},'alt',this)" />
+            ${altErr ? `<div class="field-error">⚠ ${altErr}</div>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  panel.innerHTML = `
+    <div id="image-groups-container">${groupsHtml}</div>
+    <button class="btn btn-secondary" style="margin-top:14px;display:inline-flex;align-items:center;gap:6px"
+      onclick="addImageGroup()">
+      ${plusSvg} 新增一組圖片
+    </button>
+  `;
+
+  window._imageGroups       = _imageGroups;
+  window.addImageGroup      = addImageGroup;
+  window.removeImageGroup   = removeImageGroup;
+  window.toggleImageMock    = toggleImageMock;
+  window.clearImageField    = clearImageField;
+  window.clearImgErr        = clearImgErr;
+
+  initImageDrag();
+}
+
+function addImageGroup() {
+  _imageGroups.push({ alt: '', desktop: null, tablet: null, mobile: null, errors: {} });
+  renderImagesPanel();
+}
+
+function removeImageGroup(idx) {
+  if (_imageGroups.length <= 1) return;
+  _imageGroups.splice(idx, 1);
+  renderImagesPanel();
+}
+
+function toggleImageMock(idx, field) {
+  const g = _imageGroups[idx];
+  if (g[field]) return;
+  const names = { desktop: 'image-desktop.jpg', tablet: 'image-tablet.jpg', mobile: 'image-mobile.jpg' };
+  g[field] = names[field] || 'image.jpg';
+  if (!g.errors) g.errors = {};
+  delete g.errors[field];
+  renderImagesPanel();
+}
+
+function clearImageField(idx, field) {
+  _imageGroups[idx][field] = null;
+  renderImagesPanel();
+}
+
+function clearImgErr(idx, field, input) {
+  const g = _imageGroups[idx];
+  if (!g.errors) return;
+  delete g.errors[field];
+  input.classList.remove('is-invalid');
+  const errEl = input.nextElementSibling;
+  if (errEl && errEl.classList.contains('field-error')) errEl.remove();
+}
+
+function initImageDrag() {
+  const container = document.getElementById('image-groups-container');
+  if (!container) return;
+  let dragIdx = null;
+
+  container.querySelectorAll('.image-group-card').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      dragIdx = parseInt(card.dataset.groupIdx);
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => card.classList.add('dragging'), 0);
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      container.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
+    });
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const target = e.currentTarget;
+      if (parseInt(target.dataset.groupIdx) !== dragIdx) {
+        container.querySelectorAll('.drag-over').forEach(c => c.classList.remove('drag-over'));
+        target.classList.add('drag-over');
+      }
+    });
+    card.addEventListener('dragleave', e => {
+      if (!card.contains(e.relatedTarget)) card.classList.remove('drag-over');
+    });
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      const targetIdx = parseInt(card.dataset.groupIdx);
+      if (targetIdx === dragIdx) return;
+      const [moved] = _imageGroups.splice(dragIdx, 1);
+      _imageGroups.splice(targetIdx, 0, moved);
+      renderImagesPanel();
+    });
+  });
 }
 
 // ── Edit Columns panel ────────────────────────────────────────

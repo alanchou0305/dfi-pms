@@ -58,39 +58,106 @@
       <button class="btn btn-primary">儲存</button>
     </div>
   </div>
+
   <div class="form-section">
-    <div class="form-section-header">檔案資訊</div>
+    <div class="form-section-header">基本資訊</div>
     <div class="form-section-body">
       <div class="form-grid">
         <div class="form-group">
-          <label class="form-label">檔案名稱</label>
-          <input class="form-input" type="text" placeholder="" />
+          <label class="form-label">檔案所屬分類 <span class="field-required">*</span></label>
+          <select class="form-input" id="files-edit-category">
+            <option value="">請選擇</option>
+          </select>
         </div>
         <div class="form-group">
-          <label class="form-label">大分類</label>
-          <select class="form-input"><option value="">請選擇</option></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">次分類</label>
-          <select class="form-input"><option value="">請選擇</option></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">檔案類型</label>
-          <select class="form-input"><option>上傳檔案</option><option>外部連結</option></select>
+          <label class="form-label">檔案顯示名稱</label>
+          <input class="form-input" type="text" id="files-edit-name" placeholder="前台顯示給使用者的檔名" />
         </div>
         <div class="form-group">
           <label class="form-label">狀態</label>
-          <select class="form-input"><option>啟用</option><option>停用</option></select>
+          <div style="padding-top:4px"><label class="status-capsule"><input type="checkbox" checked><span class="status-capsule-pill"></span></label></div>
         </div>
         <div class="form-group form-full">
-          <label class="form-label">上傳檔案</label>
-          <div class="upload-zone">
-            <div class="upload-zone-icon">📎</div>
-            點擊或拖曳上傳 PDF / ZIP / 其他
-          </div>
+          <label class="form-label">檔案描述</label>
+          <textarea class="form-input" id="files-edit-desc" rows="3" placeholder="簡要描述此檔案的內容或用途（可供前台或內部參考）"></textarea>
         </div>
       </div>
     </div>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section-header">檔案來源</div>
+    <div class="form-section-body">
+      <div class="form-grid">
+        <div class="form-group form-full">
+          <label class="form-label">檔案來源方式</label>
+          <div class="upload-method-group">
+            <label class="upload-method-option" id="files-edit-method-upload">
+              <input type="radio" name="files-upload-method" value="upload" checked />
+              <span class="upload-method-content">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span class="upload-method-name">File Upload</span>
+                <span class="upload-method-sub">檔案上傳</span>
+              </span>
+            </label>
+            <label class="upload-method-option" id="files-edit-method-link">
+              <input type="radio" name="files-upload-method" value="link" />
+              <span class="upload-method-content">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span class="upload-method-name">External Link</span>
+                <span class="upload-method-sub">外部連結</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group form-full" id="files-edit-upload-wrap">
+          <label class="form-label">上傳檔案</label>
+          <div class="upload-zone" id="files-edit-upload-zone">
+            <input type="file" accept=".pdf,.zip" style="display:none" id="files-edit-file-input" />
+            <div class="upload-zone-icon">📎</div>
+            <div>點擊或拖曳上傳 PDF / ZIP</div>
+            <div style="font-size:12px;color:var(--text-3);margin-top:4px">系統將自動記錄檔案大小</div>
+          </div>
+          <div class="upload-file-info" id="files-edit-file-info" style="display:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span id="files-edit-file-name" class="upload-file-name">--</span>
+            <span id="files-edit-file-size" class="upload-file-size">--</span>
+            <button class="upload-file-remove" id="files-edit-file-remove">移除</button>
+          </div>
+        </div>
+
+        <div class="form-group form-full" id="files-edit-link-wrap" style="display:none">
+          <label class="form-label">外部連結</label>
+          <input class="form-input" type="url" id="files-edit-url" placeholder="https://example.com/file.pdf" />
+          <span class="form-hint">輸入外部檔案的完整網址（前台將直接開啟此連結）</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section-header">
+      <div>
+        <span>關聯產品分類</span>
+        <div class="cat-zone-hint">勾選的分類底下所有產品頁，皆會顯示此檔案下載</div>
+      </div>
+    </div>
+    <div class="cat-zone-secondary-body" id="files-edit-sec-cat-body" style="border-top:1px solid var(--border)"></div>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section-header" style="justify-content:space-between">
+      <div>
+        <span>關聯產品型號</span>
+        <div class="cat-zone-hint">綁定特定產品頁面顯示此檔案（不受分類設定限制）</div>
+      </div>
+      <button class="btn btn-sm btn-primary" type="button" onclick="openFilesEditProdModal()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增
+      </button>
+    </div>
+    <div class="form-section-body" id="files-edit-prod-body"></div>
   </div>
 </div>
 

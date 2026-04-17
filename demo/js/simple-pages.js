@@ -1,5 +1,10 @@
 import { SAMPLE } from './data.js';
 import { langDotsHtml, statusBadge, typeBadge, actionBadge, errorTypeBadge, roleBadge, editDeleteBtns } from './helpers.js';
+import { buildCatTree } from './categories.js';
+
+// ── File edit state ────────────────────────────────────────────
+let _fileEditSelectedCats = [];
+let _fileEditSelectedProds = [];
 
 export function initFilters() {
   const tbody = document.querySelector('#view-filters .table-wrap tbody');
@@ -141,25 +146,207 @@ export function initFiles() {
   });
 }
 
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
 export function initFilesEdit() {
   const f = SAMPLE.files[0];
-  document.querySelectorAll('#view-files-edit .form-group').forEach(grp => {
-    const label = grp.querySelector('.form-label');
-    if (!label) return;
-    const text = label.textContent.trim();
-    const inp  = grp.querySelector('input');
-    const sel  = grp.querySelector('select');
-    if (text === '檔案名稱' && inp) inp.value = f.name;
-    if (text === '大分類' && sel) {
-      const mains = [...new Set(SAMPLE.files.map(x => x.mainCategory))];
-      sel.innerHTML = '<option value="">請選擇</option>' + mains.map(m => `<option${m === f.mainCategory ? ' selected' : ''}>${m}</option>`).join('');
-    }
-    if (text === '次分類' && sel) {
-      const subs = [...new Set(SAMPLE.files.map(x => x.subCategory))];
-      sel.innerHTML = '<option value="">請選擇</option>' + subs.map(s => `<option${s === f.subCategory ? ' selected' : ''}>${s}</option>`).join('');
-    }
-    if (text === '狀態' && sel) sel.value = f.status;
+
+  // Sub-category dropdown with optgroups by parent
+  const catSel = document.getElementById('files-edit-category');
+  if (catSel) {
+    const parents = SAMPLE.fileCategories.filter(c => !c.parent);
+    catSel.innerHTML = '<option value="">請選擇</option>' + parents.map(p => {
+      const children = SAMPLE.fileCategories.filter(c => c.parent === p.name);
+      if (!children.length) return '';
+      return `<optgroup label="${p.name}">${children.map(c =>
+        `<option value="${c.name}"${c.name === f.subCategory ? ' selected' : ''}>${c.name}</option>`
+      ).join('')}</optgroup>`;
+    }).join('');
+  }
+
+  const nameInp = document.getElementById('files-edit-name');
+  if (nameInp) nameInp.value = f.name;
+
+  // Upload method toggle
+  const radios      = document.querySelectorAll('input[name="files-upload-method"]');
+  const uploadWrap  = document.getElementById('files-edit-upload-wrap');
+  const linkWrap    = document.getElementById('files-edit-link-wrap');
+  const cardUpload  = document.getElementById('files-edit-method-upload');
+  const cardLink    = document.getElementById('files-edit-method-link');
+
+  function applyMethod(val) {
+    if (uploadWrap) uploadWrap.style.display = val === 'upload' ? '' : 'none';
+    if (linkWrap)   linkWrap.style.display   = val === 'link'   ? '' : 'none';
+    if (cardUpload) cardUpload.classList.toggle('selected', val === 'upload');
+    if (cardLink)   cardLink.classList.toggle('selected',   val === 'link');
+  }
+  radios.forEach(r => r.addEventListener('change', () => applyMethod(r.value)));
+  applyMethod('upload');
+
+  // File zone click → trigger hidden input
+  const uploadZone  = document.getElementById('files-edit-upload-zone');
+  const fileInput   = document.getElementById('files-edit-file-input');
+  const fileInfo    = document.getElementById('files-edit-file-info');
+  const fileNameEl  = document.getElementById('files-edit-file-name');
+  const fileSizeEl  = document.getElementById('files-edit-file-size');
+  const removeBtn   = document.getElementById('files-edit-file-remove');
+
+  if (uploadZone && fileInput) {
+    uploadZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      fileNameEl.textContent = file.name;
+      fileSizeEl.textContent = formatFileSize(file.size);
+      uploadZone.style.display = 'none';
+      fileInfo.style.display = '';
+    });
+  }
+  if (removeBtn) {
+    removeBtn.addEventListener('click', () => {
+      if (fileInput) fileInput.value = '';
+      if (fileInfo)  fileInfo.style.display  = 'none';
+      if (uploadZone) uploadZone.style.display = '';
+    });
+  }
+
+  // ── 關聯產品分類 (sec-cat style) ──
+  _fileEditSelectedCats = [];
+  renderFilesEditSecCats();
+
+  // ── 關聯產品型號 (relation style) ──
+  _fileEditSelectedProds = [];
+  renderFilesEditProds();
+}
+
+function renderFilesEditSecCats() {
+  const el = document.getElementById('files-edit-sec-cat-body');
+  if (!el) return;
+  const tree = buildCatTree(SAMPLE.categories);
+  el.innerHTML = tree.map(parent => {
+    const parentChecked = _fileEditSelectedCats.includes(parent.name);
+    const parentHtml = `<label class="sec-cat-item sec-cat-parent ${parentChecked ? 'checked' : ''}" data-cat="${parent.name.replace(/"/g, '&quot;')}">
+      <input type="checkbox" ${parentChecked ? 'checked' : ''} />
+      ${parent.name}
+    </label>`;
+    const childrenHtml = parent.children.map(child => {
+      const childChecked = _fileEditSelectedCats.includes(child.name);
+      return `<label class="sec-cat-item sec-cat-child ${childChecked ? 'checked' : ''}" data-cat="${child.name.replace(/"/g, '&quot;')}">
+        <input type="checkbox" ${childChecked ? 'checked' : ''} />
+        ${child.name}
+      </label>`;
+    }).join('');
+    return `<div class="sec-cat-parent-node">${parentHtml}${childrenHtml}</div>`;
+  }).join('');
+
+  el.querySelectorAll('.sec-cat-item input[type=checkbox]').forEach(cb => {
+    const item = cb.closest('.sec-cat-item');
+    cb.addEventListener('change', () => onFilesEditSecCatToggled(item.dataset.cat, cb.checked));
   });
+
+  el.querySelectorAll('.sec-cat-parent input[type=checkbox]').forEach(cb => {
+    const item = cb.closest('.sec-cat-item');
+    const node = tree.find(p => p.name === item.dataset.cat);
+    if (!node || node.children.length === 0) return;
+    const checkedCount = node.children.filter(c => _fileEditSelectedCats.includes(c.name)).length;
+    cb.indeterminate = checkedCount > 0 && checkedCount < node.children.length;
+  });
+}
+
+function onFilesEditSecCatToggled(cat, checked) {
+  const tree = buildCatTree(SAMPLE.categories);
+  const parentNode = tree.find(p => p.name === cat);
+  if (parentNode) {
+    const all = [parentNode.name, ...parentNode.children.map(c => c.name)];
+    if (checked) {
+      all.forEach(n => { if (!_fileEditSelectedCats.includes(n)) _fileEditSelectedCats.push(n); });
+    } else {
+      _fileEditSelectedCats = _fileEditSelectedCats.filter(s => !all.includes(s));
+    }
+  } else {
+    if (checked) { if (!_fileEditSelectedCats.includes(cat)) _fileEditSelectedCats.push(cat); }
+    else          { _fileEditSelectedCats = _fileEditSelectedCats.filter(s => s !== cat); }
+  }
+  renderFilesEditSecCats();
+}
+
+function renderFilesEditProds() {
+  const el = document.getElementById('files-edit-prod-body');
+  if (!el) return;
+  if (_fileEditSelectedProds.length === 0) {
+    el.innerHTML = `<div class="empty-state" style="padding:24px"><div class="empty-state-text">尚無關聯產品</div></div>`;
+    return;
+  }
+  el.innerHTML = _fileEditSelectedProds.map((model, idx) => {
+    const prod = SAMPLE.products.find(p => p.model === model);
+    const meta = prod ? `<span style="color:var(--text-3);font-size:11px;margin-left:6px">${prod.mainCat} / ${prod.subCat}</span>` : '';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <strong style="flex:1;font-size:13px">${model}${meta}</strong>
+      <button class="btn btn-sm btn-danger" onclick="removeFilesEditProd(${idx})">移除</button>
+    </div>`;
+  }).join('');
+}
+
+export function removeFilesEditProd(idx) {
+  _fileEditSelectedProds.splice(idx, 1);
+  renderFilesEditProds();
+}
+
+export function openFilesEditProdModal() {
+  const modal  = document.getElementById('files-edit-prod-modal');
+  const search = document.getElementById('files-edit-prod-modal-search');
+  if (!modal) return;
+  search.value = '';
+  renderFilesEditProdModalList('');
+  search.oninput = () => renderFilesEditProdModalList(search.value.trim().toLowerCase());
+  modal.style.display = 'flex';
+}
+
+function renderFilesEditProdModalList(query) {
+  const list = document.getElementById('files-edit-prod-modal-list');
+  if (!list) return;
+  const already = new Set(_fileEditSelectedProds);
+  const filtered = SAMPLE.products.filter(p => {
+    if (query && !p.model.toLowerCase().includes(query) &&
+        !p.mainCat.toLowerCase().includes(query) &&
+        !p.subCat.toLowerCase().includes(query)) return false;
+    return true;
+  });
+  if (!filtered.length) {
+    list.innerHTML = `<div class="modal-empty">沒有符合的產品</div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(p => {
+    const added = already.has(p.model);
+    return `<div class="rel-picker-row${added ? ' rel-picker-row-added' : ''}">
+      <div>
+        <div style="font-weight:600;font-size:13px">${p.model}</div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:2px">${p.mainCat} / ${p.subCat} · ${p.lifecycle}</div>
+      </div>
+      ${added
+        ? `<span style="font-size:12px;color:var(--text-3)">已新增</span>`
+        : `<button class="btn btn-sm btn-primary" onclick="confirmFilesEditProd('${p.model}')">新增</button>`
+      }
+    </div>`;
+  }).join('');
+}
+
+export function confirmFilesEditProd(model) {
+  if (!_fileEditSelectedProds.includes(model)) {
+    _fileEditSelectedProds.push(model);
+    renderFilesEditProds();
+    const search = document.getElementById('files-edit-prod-modal-search');
+    renderFilesEditProdModalList(search ? search.value.trim().toLowerCase() : '');
+  }
+}
+
+export function closeFilesEditProdModal() {
+  const modal = document.getElementById('files-edit-prod-modal');
+  if (modal) modal.style.display = 'none';
 }
 
 const FC_ICON_FOLDER = `<svg class="cat-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
@@ -335,3 +522,5 @@ export function initSmtpEdit() {
   const encSel = document.querySelector('#view-smtp-edit select.form-input');
   if (encSel) encSel.value = 'TLS';
 }
+
+Object.assign(window, { removeFilesEditProd, openFilesEditProdModal, closeFilesEditProdModal, confirmFilesEditProd });

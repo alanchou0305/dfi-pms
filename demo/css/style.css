@@ -1941,6 +1941,39 @@ tr.drag-over td { background: #F0F7FF; }
   pointer-events: none;
 }
 
+/* ── Files edit: upload method radio cards ── */
+.upload-method-group { display: flex; gap: 12px; }
+.upload-method-option { flex: 0 0 auto; width: 180px; cursor: pointer; }
+.upload-method-option input[type="radio"] { display: none; }
+.upload-method-content {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 16px 20px; border: 2px solid var(--border); border-radius: var(--radius-lg);
+  background: var(--card-bg); transition: border-color .15s, background .15s, color .15s;
+  color: var(--text-2);
+}
+.upload-method-option:hover .upload-method-content,
+.upload-method-option.selected .upload-method-content {
+  border-color: var(--accent); background: var(--accent-light); color: var(--accent);
+}
+.upload-method-name { font-weight: 600; font-size: 13px; }
+.upload-method-sub  { font-size: 12px; opacity: .7; }
+
+/* Uploaded file info bar */
+.upload-file-info {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; margin-top: 8px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--sidebar-bg); font-size: 13px;
+}
+.upload-file-name  { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upload-file-size  { color: var(--text-3); font-size: 12px; flex-shrink: 0; }
+.upload-file-remove { background: none; border: none; color: #e53935; font-size: 12px; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+.upload-file-remove:hover { text-decoration: underline; }
+
+/* Required field marker & form hint */
+.field-required { color: #e53935; font-size: 13px; margin-left: 2px; }
+.form-hint { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+
 /* Tab button with unsaved changes: subtle dot indicator */
 .tab-btn-dirty {
   position: relative;

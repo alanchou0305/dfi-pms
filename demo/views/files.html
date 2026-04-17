@@ -1,0 +1,152 @@
+<!-- 3.1 檔案列表 -->
+<div id="view-files" class="view">
+  <div class="page-header">
+    <h2>檔案列表</h2>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="navigate('files-edit')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增檔案
+      </button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="toolbar">
+      <div class="search-input">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="搜尋檔案名稱..." />
+      </div>
+      <select class="filter-select"><option>全部分類</option></select>
+      <select class="filter-select"><option>檔案類型</option><option>PDF</option><option>ZIP</option><option>外部連結</option></select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>檔案名稱</th>
+            <th>分類</th>
+            <th>類型</th>
+            <th>綁定產品</th>
+            <th>Partner Zone</th>
+            <th>更新時間</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">📁</div><div class="empty-state-text">尚無檔案資料</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span class="pagination-info">共 0 筆</span>
+      <div class="pagination-pages"><div class="page-btn">‹</div><div class="page-btn active">1</div><div class="page-btn">›</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 3.1.2 檔案編輯 -->
+<div id="view-files-edit" class="view">
+  <div class="form-header">
+    <button class="back-btn" onclick="navigate('files')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <h2>檔案編輯</h2>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="navigate('files')">取消</button>
+      <button class="btn btn-primary">儲存</button>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-header">檔案資訊</div>
+    <div class="form-section-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">檔案名稱</label>
+          <input class="form-input" type="text" placeholder="" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">分類</label>
+          <select class="form-input"><option value="">請選擇</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">檔案類型</label>
+          <select class="form-input"><option>上傳檔案</option><option>外部連結</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Partner Zone</label>
+          <select class="form-input"><option>否</option><option>是</option></select>
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">上傳檔案</label>
+          <div class="upload-zone">
+            <div class="upload-zone-icon">📎</div>
+            點擊或拖曳上傳 PDF / ZIP / 其他
+          </div>
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">綁定產品</label>
+          <input class="form-input" type="text" placeholder="搜尋並綁定產品型號..." />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3.2 檔案分類列表 -->
+<div id="view-file-categories" class="view">
+  <div class="page-header">
+    <h2>檔案分類</h2>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="navigate('file-categories-edit')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增分類
+      </button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="toolbar">
+      <div class="search-input">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="搜尋分類名稱..." />
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>分類名稱</th><th>父分類</th><th>操作</th></tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="3"><div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-text">尚無檔案分類</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 3.2.1 檔案分類編輯 -->
+<div id="view-file-categories-edit" class="view">
+  <div class="form-header">
+    <button class="back-btn" onclick="navigate('file-categories')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <h2>檔案分類編輯</h2>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="navigate('file-categories')">取消</button>
+      <button class="btn btn-primary">儲存</button>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-header">分類資訊</div>
+    <div class="form-section-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">分類名稱</label>
+          <input class="form-input" type="text" placeholder="" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">父分類</label>
+          <select class="form-input"><option value="">（大分類，無父層）</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

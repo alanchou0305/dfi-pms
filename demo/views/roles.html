@@ -1,0 +1,70 @@
+<!-- 4.2 角色權限列表 -->
+<div id="view-roles" class="view">
+  <div class="page-header">
+    <h2>角色權限管理</h2>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="navigate('roles-edit')">設定權限矩陣</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>角色名稱</th><th>說明</th><th>狀態</th><th>操作</th></tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="4"><div class="empty-state"><div class="empty-state-icon">🔐</div><div class="empty-state-text">尚無角色資料</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 4.2.1 角色權限編輯（矩陣） -->
+<div id="view-roles-edit" class="view">
+  <div class="form-header">
+    <button class="back-btn" onclick="navigate('roles')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <h2>角色權限矩陣</h2>
+    <div class="form-actions">
+      <button class="btn btn-primary">儲存</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th>功能模組</th>
+            <th colspan="2" style="text-align:center">Admin</th>
+            <th colspan="2" style="text-align:center">PM</th>
+            <th colspan="2" style="text-align:center">MKT</th>
+            <th colspan="2" style="text-align:center">Designer</th>
+            <th colspan="2" style="text-align:center">FAE</th>
+          </tr>
+          <tr>
+            <th></th>
+            <th class="matrix-header-role">R</th><th class="matrix-header-role">W</th>
+            <th class="matrix-header-role">R</th><th class="matrix-header-role">W</th>
+            <th class="matrix-header-role">R</th><th class="matrix-header-role">W</th>
+            <th class="matrix-header-role">R</th><th class="matrix-header-role">W</th>
+            <th class="matrix-header-role">R</th><th class="matrix-header-role">W</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Dashboard</td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td></tr>
+          <tr><td>產品管理</td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td></tr>
+          <tr><td>產品分類</td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td></tr>
+          <tr><td>篩選器管理</td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td></tr>
+          <tr><td>Tag 管理</td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td></tr>
+          <tr><td>規格欄位</td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td></tr>
+          <tr><td>檔案管理</td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td></tr>
+          <tr><td>帳號管理</td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td></tr>
+          <tr><td>系統管理</td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td></tr>
+          <tr><td>操作記錄</td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td><td><input type="checkbox"/></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

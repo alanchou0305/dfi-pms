@@ -1,0 +1,83 @@
+<!-- 2.5 規格欄位列表 -->
+<div id="view-specs" class="view">
+  <div class="page-header">
+    <h2>規格欄位管理</h2>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="navigate('specs-edit')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增規格群組
+      </button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="toolbar">
+      <div class="search-input">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="搜尋規格群組..." />
+      </div>
+      <select class="filter-select"><option>全部分類</option></select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>規格群組名稱</th>
+            <th>欄位數量</th>
+            <th>綁定大分類</th>
+            <th>排序</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">📐</div><div class="empty-state-text">尚無規格欄位資料</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span class="pagination-info">共 0 筆</span>
+      <div class="pagination-pages"><div class="page-btn">‹</div><div class="page-btn active">1</div><div class="page-btn">›</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2.5.1 規格欄位編輯 -->
+<div id="view-specs-edit" class="view">
+  <div class="form-header">
+    <button class="back-btn" onclick="navigate('specs')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <h2>規格群組編輯</h2>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="navigate('specs')">取消</button>
+      <button class="btn btn-primary">儲存</button>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-header">群組基本資訊</div>
+    <div class="form-section-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">群組名稱（識別用）</label>
+          <input class="form-input" type="text" placeholder="" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">綁定大分類</label>
+          <select class="form-input"><option value="">請選擇</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">排序</label>
+          <input class="form-input" type="number" placeholder="0" />
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-header" style="justify-content:space-between">
+      規格欄位
+      <button class="btn btn-sm btn-primary">+ 新增欄位</button>
+    </div>
+    <div class="form-section-body">
+      <div class="empty-state" style="padding:32px"><div class="empty-state-text">尚無規格欄位</div></div>
+    </div>
+  </div>
+</div>

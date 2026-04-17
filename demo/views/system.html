@@ -1,0 +1,168 @@
+<!-- 5.2 語系列表 -->
+<div id="view-languages" class="view">
+  <div class="page-header">
+    <h2>語系管理</h2>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="navigate('languages-edit')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增語系
+      </button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>語系名稱</th><th>語系代碼</th><th>URL 前綴</th><th>狀態</th><th>操作</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>English</td><td><span class="badge badge-neutral">en-US</span></td><td>/en/</td>
+            <td><span class="badge badge-success"><span class="badge-dot"></span>啟用</span></td>
+            <td><div class="col-actions"><button class="btn btn-sm btn-secondary" onclick="navigate('languages-edit')">編輯</button></div></td>
+          </tr>
+          <tr>
+            <td>繁體中文</td><td><span class="badge badge-neutral">zh-TW</span></td><td>/tw/</td>
+            <td><span class="badge badge-success"><span class="badge-dot"></span>啟用</span></td>
+            <td><div class="col-actions"><button class="btn btn-sm btn-secondary" onclick="navigate('languages-edit')">編輯</button></div></td>
+          </tr>
+          <tr>
+            <td>简体中文</td><td><span class="badge badge-neutral">zh-CN</span></td><td>/cn/</td>
+            <td><span class="badge badge-success"><span class="badge-dot"></span>啟用</span></td>
+            <td><div class="col-actions"><button class="btn btn-sm btn-secondary" onclick="navigate('languages-edit')">編輯</button></div></td>
+          </tr>
+          <tr>
+            <td>日本語</td><td><span class="badge badge-neutral">ja-JP</span></td><td>/jp/</td>
+            <td><span class="badge badge-success"><span class="badge-dot"></span>啟用</span></td>
+            <td><div class="col-actions"><button class="btn btn-sm btn-secondary" onclick="navigate('languages-edit')">編輯</button></div></td>
+          </tr>
+          <tr>
+            <td>Deutsch</td><td><span class="badge badge-neutral">de-DE</span></td><td>/de/</td>
+            <td><span class="badge badge-neutral"><span class="badge-dot"></span>停用</span></td>
+            <td><div class="col-actions"><button class="btn btn-sm btn-secondary" onclick="navigate('languages-edit')">編輯</button></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 5.2.1 語系編輯 -->
+<div id="view-languages-edit" class="view">
+  <div class="form-header">
+    <button class="back-btn" onclick="navigate('languages')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <h2>語系編輯</h2>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="navigate('languages')">取消</button>
+      <button class="btn btn-primary">儲存</button>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-header">語系設定</div>
+    <div class="form-section-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">語系名稱 *</label>
+          <input class="form-input" type="text" placeholder="例：English" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">語系代碼 *</label>
+          <input class="form-input" type="text" placeholder="例：en-US" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">URL 前綴 *</label>
+          <input class="form-input" type="text" placeholder="例：/en/" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">HubSpot Language Slug</label>
+          <input class="form-input" type="text" placeholder="例：en" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">狀態</label>
+          <select class="form-input"><option>啟用</option><option>停用</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5.4 Log 列表 -->
+<div id="view-logs" class="view">
+  <div class="page-header">
+    <h2>操作記錄</h2>
+  </div>
+  <div class="tabs-card">
+    <div class="tabs-bar" data-tab-group="logs">
+      <button class="tab-btn active" data-tab="sync">Sync Log</button>
+      <button class="tab-btn" data-tab="error">Error Log</button>
+      <button class="tab-btn" data-tab="audit">Audit Log</button>
+    </div>
+
+    <!-- Sync Log -->
+    <div class="tab-panel active" data-tab-panel="logs" data-tab="sync">
+      <div class="toolbar" style="padding:12px 0">
+        <div class="search-input">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="搜尋..." />
+        </div>
+        <select class="filter-select"><option>全部狀態</option><option>成功</option><option>失敗</option></select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>同步類型</th><th>目標</th><th>狀態</th><th>訊息</th><th>時間</th></tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">🔄</div><div class="empty-state-text">尚無 Sync Log</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Error Log -->
+    <div class="tab-panel" data-tab-panel="logs" data-tab="error">
+      <div class="toolbar" style="padding:12px 0">
+        <div class="search-input">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="搜尋錯誤訊息..." />
+        </div>
+        <select class="filter-select"><option>全部類型</option><option>API 錯誤</option><option>驗證失敗</option><option>系統錯誤</option></select>
+        <select class="filter-select"><option>全部模組</option></select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>錯誤類型</th><th>模組</th><th>錯誤訊息</th><th>操作者</th><th>時間</th></tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">尚無 Error Log</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Audit Log -->
+    <div class="tab-panel" data-tab-panel="logs" data-tab="audit">
+      <div class="toolbar" style="padding:12px 0">
+        <div class="search-input">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="搜尋操作者 / 模組..." />
+        </div>
+        <select class="filter-select"><option>全部動作</option><option>CREATE</option><option>UPDATE</option><option>DELETE</option></select>
+        <select class="filter-select"><option>全部模組</option></select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>操作者</th><th>模組</th><th>動作</th><th>描述</th><th>時間</th></tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">尚無 Audit Log</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

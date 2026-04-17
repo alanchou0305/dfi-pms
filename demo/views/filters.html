@@ -1,0 +1,91 @@
+<!-- 2.3 篩選器列表 -->
+<div id="view-filters" class="view">
+  <div class="page-header">
+    <h2>篩選器管理</h2>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="navigate('filters-edit')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增篩選器
+      </button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="toolbar">
+      <div class="search-input">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="搜尋篩選器名稱..." />
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>篩選器群組</th>
+            <th>選項數量</th>
+            <th>語系狀態</th>
+            <th>排序</th>
+            <th>狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">尚無篩選器資料</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span class="pagination-info">共 0 筆</span>
+      <div class="pagination-pages"><div class="page-btn">‹</div><div class="page-btn active">1</div><div class="page-btn">›</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2.3.1 篩選器編輯 -->
+<div id="view-filters-edit" class="view">
+  <div class="form-header">
+    <button class="back-btn" onclick="navigate('filters')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <h2>篩選器編輯</h2>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="navigate('filters')">取消</button>
+      <button class="btn btn-primary">儲存</button>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-header">篩選器群組</div>
+    <div class="form-section-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">狀態</label>
+          <select class="form-input"><option>啟用</option><option>停用</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">排序</label>
+          <input class="form-input" type="number" placeholder="0" />
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="lang-tabs-bar" data-lang-group="filter-edit" style="padding:0;margin-bottom:12px">
+        <button class="lang-tab-btn active" data-lang="en">EN</button>
+        <button class="lang-tab-btn" data-lang="tw">TW</button>
+        <button class="lang-tab-btn" data-lang="cn">CN</button>
+        <button class="lang-tab-btn" data-lang="jp">JP</button>
+        <button class="lang-tab-btn" data-lang="de">DE</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">篩選器名稱</label>
+        <input class="form-input" type="text" placeholder="" />
+      </div>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-header" style="justify-content:space-between">
+      篩選選項
+      <button class="btn btn-sm btn-primary">+ 新增選項</button>
+    </div>
+    <div class="form-section-body">
+      <div class="empty-state" style="padding:32px"><div class="empty-state-text">尚無篩選選項</div></div>
+    </div>
+  </div>
+</div>

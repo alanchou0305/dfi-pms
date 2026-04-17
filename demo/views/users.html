@@ -1,0 +1,89 @@
+<!-- 4.1 使用者列表 -->
+<div id="view-users" class="view">
+  <div class="page-header">
+    <h2>使用者管理</h2>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="navigate('users-edit')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增使用者
+      </button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="toolbar">
+      <div class="search-input">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="搜尋姓名 / 信箱..." />
+      </div>
+      <select class="filter-select"><option>全部角色</option><option>Admin</option><option>PM</option><option>MKT</option><option>Designer</option><option>FAE</option></select>
+      <select class="filter-select"><option>全部狀態</option><option>啟用</option><option>停用</option></select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>姓名</th>
+            <th>信箱</th>
+            <th>公司</th>
+            <th>部門</th>
+            <th>角色</th>
+            <th>狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">👤</div><div class="empty-state-text">尚無使用者資料</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span class="pagination-info">共 0 筆</span>
+      <div class="pagination-pages"><div class="page-btn">‹</div><div class="page-btn active">1</div><div class="page-btn">›</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 4.1.1 使用者編輯 -->
+<div id="view-users-edit" class="view">
+  <div class="form-header">
+    <button class="back-btn" onclick="navigate('users')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <h2>使用者編輯</h2>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="navigate('users')">取消</button>
+      <button class="btn btn-primary">儲存</button>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-header">帳號資訊</div>
+    <div class="form-section-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">姓名 *</label>
+          <input class="form-input" type="text" placeholder="" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Microsoft 信箱 *</label>
+          <input class="form-input" type="email" placeholder="" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">公司</label>
+          <input class="form-input" type="text" placeholder="" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">部門</label>
+          <input class="form-input" type="text" placeholder="" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">角色 *</label>
+          <select class="form-input"><option value="">請選擇</option><option>Admin</option><option>PM</option><option>MKT</option><option>Designer</option><option>FAE</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">狀態</label>
+          <select class="form-input"><option>啟用</option><option>停用</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

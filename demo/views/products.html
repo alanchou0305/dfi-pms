@@ -1,0 +1,353 @@
+<!-- 2.1 產品列表 -->
+<div id="view-products" class="view">
+  <div class="page-header">
+    <h2>產品列表</h2>
+    <div class="actions">
+      <button class="btn btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        匯出
+      </button>
+<button class="btn btn-primary" onclick="navigate('products-edit')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增產品
+      </button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="folder-nav">
+      <span class="folder-nav-item current">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        所有產品
+      </span>
+    </div>
+    <div class="toolbar">
+      <div class="search-input">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="搜尋型號 / 產品名稱..." />
+      </div>
+      <select class="filter-select" id="filter-main-cat"><option value="">主分類</option></select>
+      <select class="filter-select" id="filter-sub-cat"><option value="">次分類</option></select>
+      <select class="filter-select"><option>生命週期</option></select>
+      <div class="toolbar-right">
+        <button class="btn-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>型號</th>
+            <th>主分類</th>
+            <th>次分類</th>
+            <th>生命週期</th>
+            <th>語系啟用狀態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <div class="empty-state-icon">📦</div>
+                <div class="empty-state-text">尚無產品資料</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span class="pagination-info">共 0 筆</span>
+      <div class="pagination-pages">
+        <div class="page-btn">‹</div>
+        <div class="page-btn active">1</div>
+        <div class="page-btn">›</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2.1.1 產品編輯 -->
+<div id="view-products-edit" class="view">
+  <div class="form-header">
+    <button class="back-btn" onclick="navigate('products')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="prod-edit-header-info">
+      <div class="prod-edit-subtitle">產品編輯</div>
+      <h2 id="prod-edit-model-title"></h2>
+    </div>
+  </div>
+
+  <!-- Section Switcher -->
+  <div class="section-switcher" id="prod-section-switcher">
+    <button class="section-btn active" data-section="info">產品資訊</button>
+    <button class="section-btn" data-section="web">網頁內容</button>
+  </div>
+
+  <!-- Section: 產品資訊 -->
+  <div class="section-panel active" data-section-panel="info">
+  <div class="tabs-card">
+    <div class="tabs-bar" data-tab-group="prod-edit">
+      <button class="tab-btn active" data-tab="basic">基本資訊</button>
+      <button class="tab-btn" data-tab="images">圖片</button>
+      <button class="tab-btn" data-tab="specs">規格</button>
+      <button class="tab-btn" data-tab="ordering">訂購資訊</button>
+    </div>
+
+    <!-- Tab: 基本資訊 -->
+    <div class="tab-panel active" data-tab-panel="prod-edit" data-tab="basic">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">型號 *</label>
+          <input class="form-input" type="text" placeholder="例：XYZ-1234" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">生命週期</label>
+          <select class="form-input">
+            <option value="">請選擇</option>
+            <option>Active</option>
+            <option>EOL</option>
+            <option>Preview</option>
+          </select>
+        </div>
+        <div class="form-group form-full">
+          <div class="cat-section">
+            <!-- Row 1: 大分類 → 次分類（兩步驟依序選擇） -->
+            <div class="cat-zones-wrapper">
+              <!-- Step 1: 大分類 -->
+              <div class="cat-zone">
+                <div class="cat-zone-hd">
+                  <div>
+                    <span class="cat-zone-title">大分類</span>
+                    <div class="cat-zone-subtitle">主分類 Step 1</div>
+                  </div>
+                  <button class="btn btn-sm btn-secondary" onclick="navigate('categories-edit')">管理↗</button>
+                </div>
+                <div class="cat-zone-body" id="primary-parent-body"></div>
+              </div>
+              <div class="cat-zone-arrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+              <!-- Step 2: 次分類 -->
+              <div class="cat-zone">
+                <div class="cat-zone-hd">
+                  <div>
+                    <span class="cat-zone-title">次分類</span>
+                    <div class="cat-zone-subtitle">主分類 Step 2</div>
+                  </div>
+                </div>
+                <div class="cat-zone-body" id="primary-sub-body"></div>
+              </div>
+            </div>
+            <!-- Row 2: 篩選器（全寬，依主分類自動帶入） -->
+            <div class="cat-zone-filter-row">
+              <div class="cat-zone-hd">
+                <div>
+                  <span class="cat-zone-title">篩選器 <em class="cat-zone-rule">（多選）</em></span>
+                  <div class="cat-zone-hint">依主分類自動帶入篩選群組</div>
+                </div>
+                <button class="btn btn-sm btn-secondary" onclick="navigate('filters-edit')">管理↗</button>
+              </div>
+              <div class="cat-zone-filter-body" id="filter-zone-body"></div>
+            </div>
+            <!-- Row 3: 次要分類（樹狀多選，僅影響前台曝光，不影響後台屬性） -->
+            <div class="cat-zone-secondary-row">
+              <div class="cat-zone-hd">
+                <div>
+                  <span class="cat-zone-title">次要分類 <em class="cat-zone-rule">（多選）</em></span>
+                  <div class="cat-zone-hint">僅決定前台額外曝光的分類頁面，不影響後台規格屬性</div>
+                </div>
+                <button class="btn btn-sm btn-secondary" onclick="navigate('categories-edit')">管理↗</button>
+              </div>
+              <div class="cat-zone-secondary-body" id="secondary-cat-body"></div>
+            </div>
+          </div>
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">Tags</label>
+          <div id="tags-zone" style="border:1px solid var(--border);border-radius:var(--radius);min-height:40px;padding:8px 12px;background:var(--sidebar-bg);"></div>
+        </div>
+      </div>
+      <div class="divider" style="margin:16px 0"></div>
+      <div class="tab-section-title" style="margin-bottom:12px">相關產品</div>
+      <div class="form-section" style="margin-bottom:12px">
+        <div class="form-section-header" style="justify-content:space-between">
+          <span>衍生產品</span>
+          <button class="btn btn-sm btn-primary" onclick="openAddRelationModal('derivatives')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            新增
+          </button>
+        </div>
+        <div class="form-section-body" id="rel-derivatives-body">
+          <!-- rendered by JS -->
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-header" style="justify-content:space-between">
+          <span>配件</span>
+          <button class="btn btn-sm btn-primary" onclick="openAddRelationModal('accessories')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            新增
+          </button>
+        </div>
+        <div class="form-section-body" id="rel-accessories-body">
+          <!-- rendered by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: 產品圖片 -->
+    <div class="tab-panel" data-tab-panel="prod-edit" data-tab="images">
+      <div class="form-group" style="margin-bottom:16px">
+        <label class="form-label">圖片群組</label>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">
+        <div>
+          <div class="text-sm" style="margin-bottom:8px">Desktop</div>
+          <div class="upload-zone">
+            <div class="upload-zone-icon">🖼</div>
+            點擊或拖曳上傳
+          </div>
+        </div>
+        <div>
+          <div class="text-sm" style="margin-bottom:8px">Tablet</div>
+          <div class="upload-zone">
+            <div class="upload-zone-icon">🖼</div>
+            點擊或拖曳上傳
+          </div>
+        </div>
+        <div>
+          <div class="text-sm" style="margin-bottom:8px">Mobile</div>
+          <div class="upload-zone">
+            <div class="upload-zone-icon">🖼</div>
+            點擊或拖曳上傳
+          </div>
+        </div>
+      </div>
+      <div class="divider" style="margin-bottom:20px"></div>
+      <div class="form-group">
+        <label class="form-label">Datasheet 上傳</label>
+        <div class="upload-zone" style="max-width:400px">
+          <div class="upload-zone-icon">📄</div>
+          點擊或拖曳上傳 PDF / ZIP
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: 產品規格 -->
+    <div class="tab-panel" data-tab-panel="prod-edit" data-tab="specs">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px">
+        <button class="btn btn-secondary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Excel 批次匯入
+        </button>
+        <button class="btn btn-secondary">技術文件上傳</button>
+      </div>
+      <div class="empty-state" style="padding:40px">
+        <div class="empty-state-icon">📊</div>
+        <div class="empty-state-text">請先設定主分類，以載入對應規格欄位</div>
+      </div>
+    </div>
+
+    <!-- Tab: 訂購資訊 -->
+    <div class="tab-panel" data-tab-panel="prod-edit" data-tab="ordering">
+
+      <!-- Dynamic Ports Settings -->
+      <div class="dyn-ports-section">
+        <div class="dyn-ports-header">
+          <span class="dyn-ports-title">Dynamic Ports Settings</span>
+          <button class="btn btn-sm btn-secondary" onclick="addOrderingPort()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            新增 Port
+          </button>
+        </div>
+        <div id="dyn-ports-tags">
+          <!-- rendered by JS: renderDynamicPortsSettings() -->
+        </div>
+      </div>
+
+      <!-- Ordering table -->
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button class="btn btn-primary" onclick="addOrderingRow()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          新增 P/N
+        </button>
+      </div>
+      <div class="ordering-table-wrap">
+        <table id="ordering-table">
+          <thead><tr></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+  </div>
+
+  <!-- Section: 網頁內容 -->
+  <div class="section-panel" data-section-panel="web">
+    <div class="tabs-card">
+      <div class="tabs-bar" id="lang-tabs-bar">
+        <!-- rendered by renderWebContentTabs() -->
+      </div>
+      <div id="lang-tab-panels">
+        <!-- rendered by renderWebContentTabs() -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: 複製語系內容 -->
+<div id="lang-copy-modal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h3 class="modal-title">複製語系內容</h3>
+      <button class="modal-close" onclick="document.getElementById('lang-copy-modal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px">
+      <div style="margin-bottom:20px">
+        <div class="form-label" style="margin-bottom:10px">來源語系</div>
+        <div id="lang-copy-source"></div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div class="form-label" style="margin-bottom:10px">複製到</div>
+        <div id="lang-copy-targets"></div>
+      </div>
+      <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:10px 12px;font-size:12px;color:#92400E">
+        此操作將覆蓋目標語系現有的草稿內容，複製後狀態將自動標記為「待同步」。
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('lang-copy-modal').style.display='none'">取消</button>
+      <button class="btn btn-primary" onclick="confirmLangCopy()">確認複製</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: 停用語系確認 -->
+<div id="lang-disable-modal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h3 class="modal-title">確認停用語系</h3>
+      <button class="modal-close" onclick="document.getElementById('lang-disable-modal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:#FEF2F2;display:flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div>
+          <div style="font-weight:600;margin-bottom:6px">停用 <span id="disable-lang-name"></span> 語系</div>
+          <div style="font-size:13px;color:var(--text-2);line-height:1.6">停用後，HubSpot 上對應的語系頁面將同步下架。此操作可隨時重新啟用。</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('lang-disable-modal').style.display='none'">取消</button>
+      <button class="btn btn-primary" style="background:#DC2626;border-color:#DC2626" onclick="confirmDisableLang()">確認停用</button>
+    </div>
+  </div>
+</div>

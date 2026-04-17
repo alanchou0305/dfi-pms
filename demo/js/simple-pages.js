@@ -162,15 +162,47 @@ export function initFilesEdit() {
   });
 }
 
+const FC_ICON_FOLDER = `<svg class="cat-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
+const FC_ICON_FILE   = `<svg class="cat-icon cat-icon-sub" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+
 export function initFileCategories() {
-  const tbody = document.querySelector('#view-file-categories .table-wrap tbody');
-  if (!tbody) return;
-  tbody.innerHTML = SAMPLE.fileCategories.map(c => `
-    <tr>
-      <td><strong>${c.name}</strong></td>
-      <td><span class="text-muted">${c.parent}</span></td>
-      <td>${editDeleteBtns('file-categories-edit')}</td>
-    </tr>`).join('');
+  const tree = document.getElementById('file-cat-tree');
+  if (!tree) return;
+  const parents = SAMPLE.fileCategories.filter(c => !c.parent);
+  tree.innerHTML = parents.map(p => {
+    const children = SAMPLE.fileCategories.filter(c => c.parent === p.name);
+    return `
+      <div class="cat-node cat-parent" data-name="${p.name}">
+        <div class="cat-node-row">
+          <button class="cat-toggle open" title="折疊">▾</button>
+          ${FC_ICON_FOLDER}
+          <span class="cat-name">${p.name}</span>
+          <div class="cat-actions">${editDeleteBtns('file-categories-edit')}</div>
+        </div>
+        <div class="cat-children">
+          ${children.map(c => `
+            <div class="cat-node cat-child" data-name="${c.name}">
+              <div class="cat-node-row">
+                <span class="cat-toggle-spacer"></span>
+                ${FC_ICON_FILE}
+                <span class="cat-name">${c.name}</span>
+                <div class="cat-actions">${editDeleteBtns('file-categories-edit')}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  tree.querySelectorAll('.cat-toggle').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const node = btn.closest('.cat-parent');
+      const children = node.querySelector('.cat-children');
+      const open = btn.classList.toggle('open');
+      btn.textContent = open ? '▾' : '▸';
+      children.style.display = open ? '' : 'none';
+    });
+  });
 }
 
 export function initUsers() {

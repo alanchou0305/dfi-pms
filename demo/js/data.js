@@ -430,11 +430,16 @@ export const SAMPLE = {
   ],
 
   fileCategories: [
-    { name: 'Datasheet',         parent: '—' },
-    { name: 'Quick Start Guide', parent: '—' },
-    { name: 'User Manual',       parent: '—' },
-    { name: 'BIOS / Driver',     parent: '—' },
-    { name: 'Brochure',          parent: '—' },
+    { name: '文件資料',         parent: null },
+    { name: 'Datasheet',        parent: '文件資料' },
+    { name: 'Quick Start Guide',parent: '文件資料' },
+    { name: 'User Manual',      parent: '文件資料' },
+    { name: '軟體驅動',         parent: null },
+    { name: 'BIOS / Driver',    parent: '軟體驅動' },
+    { name: 'Firmware',         parent: '軟體驅動' },
+    { name: '行銷素材',         parent: null },
+    { name: 'Brochure',         parent: '行銷素材' },
+    { name: 'Catalog',          parent: '行銷素材' },
   ],
 
   users: [

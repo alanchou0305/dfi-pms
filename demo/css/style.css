@@ -721,26 +721,6 @@ select.form-input { cursor: pointer; }
 .folder-nav-sep { color: var(--text-3); }
 
 /* ============================================================
-   DASHBOARD
-   ============================================================ */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.stat-card {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  box-shadow: var(--shadow);
-}
-.stat-label { font-size: 12px; font-weight: 500; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
-.stat-value { font-size: 28px; font-weight: 700; color: var(--primary); line-height: 1; }
-.stat-sub { font-size: 12px; color: var(--text-3); margin-top: 4px; }
-
-/* ============================================================
    ROLE PERMISSION MATRIX
    ============================================================ */
 .matrix-table th, .matrix-table td {

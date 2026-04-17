@@ -7,7 +7,6 @@ const ROUTES = {
   'login':                 { auth: true },
   '403':                   { auth: true },
   '404':                   { auth: true },
-  'dashboard':             { crumb: ['Dashboard'],                              nav: 'nav-dashboard' },
   'products':              { crumb: ['產品管理', '產品列表'],                    nav: 'nav-products',            group: 'grp-products' },
   'products-edit':         { crumb: ['產品管理', '產品列表', '產品編輯'],                   nav: 'nav-products',            group: 'grp-products' },
   'products-lang-edit':    { crumb: ['產品管理', '產品列表', '產品編輯', '網頁內容編輯'],   nav: 'nav-products',            group: 'grp-products' },
@@ -614,35 +613,6 @@ function editDeleteBtns(editHash) {
 }
 
 // ── VIEW INITS ───────────────────────────────────────────────
-
-function initDashboard() {
-  const stats = document.querySelectorAll('#view-dashboard .stat-value');
-  if (stats[0]) stats[0].textContent = SAMPLE.products.length;
-  if (stats[1]) stats[1].textContent = SAMPLE.categories.length;
-  if (stats[2]) stats[2].textContent = SAMPLE.files.length;
-  if (stats[3]) stats[3].textContent = SAMPLE.users.filter(u => u.status === 'active').length;
-
-  const card = document.querySelector('#view-dashboard .card');
-  if (!card) return;
-  const empty = card.querySelector('.empty-state');
-  if (empty) {
-    empty.outerHTML = `<div class="table-wrap">
-      <table>
-        <thead><tr><th>操作者</th><th>模組</th><th>動作</th><th>描述</th><th>時間</th></tr></thead>
-        <tbody>
-          ${SAMPLE.auditLogs.slice(0, 5).map(l => `
-          <tr>
-            <td>${l.user}</td>
-            <td>${l.module}</td>
-            <td>${actionBadge(l.action)}</td>
-            <td style="font-size:12px">${l.desc}</td>
-            <td style="color:var(--text-3);font-size:12px;white-space:nowrap">${l.time}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`;
-  }
-}
 
 function renderProductRows() {
   const tbody = document.querySelector('#view-products .table-wrap tbody');
@@ -2413,7 +2383,6 @@ function initRoles() {
 function initRolesEdit() {
   // Permission matrix defaults: Admin=all, PM=product R+W, MKT=product R only, etc.
   const permMap = {
-    'Dashboard':   [1,1, 1,0, 1,0, 1,0, 1,0],
     '產品管理':    [1,1, 1,1, 1,1, 1,0, 1,0],
     '產品分類':    [1,1, 1,1, 1,0, 1,0, 1,0],
     '篩選器管理':  [1,1, 1,1, 1,0, 0,0, 0,0],
@@ -2496,7 +2465,6 @@ function initSmtpEdit() {
 
 // ── VIEW INIT MAP ────────────────────────────────────────────
 const VIEW_INITS = {
-  'dashboard':            initDashboard,
   'products':             initProductList,
   'products-edit':        initProductEdit,
   'products-lang-edit':   () => navigate('products-edit'), // removed: now inline tabs
@@ -2626,7 +2594,7 @@ function initLangTabs() {
 
 // ── VIEW LOADER ───────────────────────────────────────────────
 const VIEW_FILES = [
-  'dashboard', 'products', 'categories', 'filters',
+  'products', 'categories', 'filters',
   'tags', 'specs', 'files', 'users', 'roles', 'system',
 ];
 

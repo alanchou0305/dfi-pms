@@ -17,7 +17,7 @@ let _imageGroups        = [{ alt: '', desktop: null, tablet: null, mobile: null,
 // ── Ordering columns ─────────────────────────────────────────
 const BASE_ORDERING_COLS = [
   { key: 'modelName',    label: 'Model Name',    width: '140px' },
-  { key: 'pn',          label: 'P/N',            width: '160px' },
+  { key: 'pn',          label: 'Part Number',    width: '160px' },
   { key: 'processor',   label: 'Processor',      width: '220px' },
   { key: 'memory',      label: 'Memory',         width: '160px' },
   { key: 'thermal',     label: 'Thermal',        width: '100px' },
@@ -531,7 +531,7 @@ export function renderOrderingTable() {
   const colCount = visibleCols.length + 1;
   if (!rows || rows.length === 0) {
     tbody.innerHTML = `<tr><td colspan="${colCount}">
-      <div class="empty-state" style="padding:32px"><div class="empty-state-text">尚無訂購資訊，點擊「新增 P/N」開始建立</div></div>
+      <div class="empty-state" style="padding:32px"><div class="empty-state-text">尚無訂購資訊，點擊「新增 Part Number」開始建立</div></div>
     </td></tr>`;
     return;
   }

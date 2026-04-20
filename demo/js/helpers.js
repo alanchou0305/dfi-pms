@@ -24,9 +24,13 @@ export function typeBadge(t) {
 }
 
 export function actionBadge(a) {
-  if (a === 'CREATE') return `<span class="badge badge-success">CREATE</span>`;
-  if (a === 'UPDATE') return `<span class="badge badge-warning">UPDATE</span>`;
-  if (a === 'DELETE') return `<span class="badge badge-danger">DELETE</span>`;
+  if (a === 'LOGIN')   return `<span class="badge badge-info">LOGIN</span>`;
+  if (a === 'LOGOUT')  return `<span class="badge badge-neutral">LOGOUT</span>`;
+  if (a === 'CREATE')  return `<span class="badge badge-success">CREATE</span>`;
+  if (a === 'UPDATE')  return `<span class="badge badge-warning">UPDATE</span>`;
+  if (a === 'DELETE')  return `<span class="badge badge-danger">DELETE</span>`;
+  if (a === 'PUBLISH') return `<span class="badge badge-primary">PUBLISH</span>`;
+  if (a === 'EXPORT')  return `<span class="badge badge-neutral">EXPORT</span>`;
   return `<span class="badge badge-neutral">${a}</span>`;
 }
 

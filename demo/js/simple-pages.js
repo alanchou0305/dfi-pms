@@ -774,38 +774,77 @@ export function initRolesEdit() {
   });
 }
 
-export function initLogs() {
-  const auditTbody = document.querySelector('[data-tab-panel="logs"][data-tab="audit"] .table-wrap tbody');
-  const errorTbody = document.querySelector('[data-tab-panel="logs"][data-tab="error"] .table-wrap tbody');
+const LOGS_PAGE_SIZE = 10;
+let _auditPage = 1;
+let _errorPage = 1;
 
-  if (auditTbody) {
-    auditTbody.innerHTML = SAMPLE.auditLogs.map(l => `
-      <tr>
-        <td>${l.user}</td>
-        <td>${l.module}</td>
-        <td style="font-size:12px;color:var(--text-2)">${l.page}</td>
-        <td>${actionBadge(l.action)}</td>
-        <td style="font-size:12px"><strong>${l.target}</strong></td>
-        <td style="color:var(--text-3);font-size:12px;white-space:nowrap">${l.time}</td>
-      </tr>`).join('');
-  }
-  if (errorTbody) {
-    errorTbody.innerHTML = SAMPLE.errorLogs.map(l => `
-      <tr>
-        <td>${l.user}</td>
-        <td>${l.module}</td>
-        <td style="font-size:12px;color:var(--text-2)">${l.source}</td>
-        <td style="font-size:12px"><strong>${l.target}</strong></td>
-        <td>${errorTypeBadge(l.type)}</td>
-        <td style="font-size:12px;color:var(--text-2)">${l.msg}</td>
-        <td style="color:var(--text-3);font-size:12px;white-space:nowrap">${l.time}</td>
-      </tr>`).join('');
-  }
+function _logPageBtns(total, current, fn) {
+  const pages = Math.ceil(total / LOGS_PAGE_SIZE) || 1;
+  const prev  = `<div class="page-btn" onclick="${fn}(${current - 1})"${current === 1 ? ' style="opacity:.4;pointer-events:none"' : ''}>‹</div>`;
+  const next  = `<div class="page-btn" onclick="${fn}(${current + 1})"${current === pages ? ' style="opacity:.4;pointer-events:none"' : ''}>›</div>`;
+  const nums  = Array.from({ length: pages }, (_, i) => i + 1)
+    .map(p => `<div class="page-btn${p === current ? ' active' : ''}" onclick="${fn}(${p})">${p}</div>`).join('');
+  return prev + nums + next;
+}
+
+function _renderAuditRows() {
+  const panel  = document.querySelector('[data-tab-panel="logs"][data-tab="audit"]');
+  if (!panel) return;
+  const tbody  = panel.querySelector('.table-wrap tbody');
+  const info   = panel.querySelector('.pagination-info');
+  const pages  = panel.querySelector('.pagination-pages');
+  const total  = SAMPLE.auditLogs.length;
+  _auditPage   = Math.max(1, Math.min(_auditPage, Math.ceil(total / LOGS_PAGE_SIZE) || 1));
+  const slice  = SAMPLE.auditLogs.slice((_auditPage - 1) * LOGS_PAGE_SIZE, _auditPage * LOGS_PAGE_SIZE);
+  if (tbody) tbody.innerHTML = slice.map(l => `
+    <tr>
+      <td>${l.user}</td>
+      <td>${l.module}</td>
+      <td style="font-size:12px;color:var(--text-2)">${l.page}</td>
+      <td>${actionBadge(l.action)}</td>
+      <td style="font-size:12px"><strong>${l.target}</strong></td>
+      <td style="color:var(--text-3);font-size:12px;white-space:nowrap">${l.time}</td>
+    </tr>`).join('');
+  if (info)  info.textContent  = `共 ${total} 筆`;
+  if (pages) pages.innerHTML   = _logPageBtns(total, _auditPage, 'setAuditPage');
+}
+
+function _renderErrorRows() {
+  const panel  = document.querySelector('[data-tab-panel="logs"][data-tab="error"]');
+  if (!panel) return;
+  const tbody  = panel.querySelector('.table-wrap tbody');
+  const info   = panel.querySelector('.pagination-info');
+  const pages  = panel.querySelector('.pagination-pages');
+  const total  = SAMPLE.errorLogs.length;
+  _errorPage   = Math.max(1, Math.min(_errorPage, Math.ceil(total / LOGS_PAGE_SIZE) || 1));
+  const slice  = SAMPLE.errorLogs.slice((_errorPage - 1) * LOGS_PAGE_SIZE, _errorPage * LOGS_PAGE_SIZE);
+  if (tbody) tbody.innerHTML = slice.map(l => `
+    <tr>
+      <td>${l.user}</td>
+      <td>${l.module}</td>
+      <td style="font-size:12px;color:var(--text-2)">${l.source}</td>
+      <td style="font-size:12px"><strong>${l.target}</strong></td>
+      <td>${errorTypeBadge(l.type)}</td>
+      <td style="font-size:12px;color:var(--text-2)">${l.msg}</td>
+      <td style="color:var(--text-3);font-size:12px;white-space:nowrap">${l.time}</td>
+    </tr>`).join('');
+  if (info)  info.textContent  = `共 ${total} 筆`;
+  if (pages) pages.innerHTML   = _logPageBtns(total, _errorPage, 'setErrorPage');
+}
+
+export function setAuditPage(page) { _auditPage = page; _renderAuditRows(); }
+export function setErrorPage(page)  { _errorPage = page; _renderErrorRows(); }
+
+export function initLogs() {
+  _auditPage = 1;
+  _errorPage = 1;
+  _renderAuditRows();
+  _renderErrorRows();
   ['audit', 'error'].forEach(tab => {
     const modSel = document.querySelectorAll(`[data-tab-panel="logs"][data-tab="${tab}"] select.filter-select`);
     const last = modSel[modSel.length - 1];
     if (last) last.innerHTML = '<option>全部模組</option>' +
-      ['產品管理', '檔案管理', '帳號管理', '系統管理'].map(m => `<option>${m}</option>`).join('');
+      ['產品管理', '檔案管理', '帳號管理', '系統管理', '系統'].map(m => `<option>${m}</option>`).join('');
   });
 }
 
@@ -1427,4 +1466,5 @@ Object.assign(window, { removeFilesEditProd, openFilesEditProdModal, closeFilesE
   openTagLangCopyModal, refreshTagLangCopyTargets, confirmTagLangCopy,
   switchSpecLangTab, updateSpecGroupName, addSpecField, removeSpecField, updateSpecFieldName,
   openSpecLangCopyModal, refreshSpecLangCopyTargets, confirmSpecLangCopy,
+  setAuditPage, setErrorPage,
 });

@@ -126,11 +126,11 @@ export function initSpecs() {
   const info  = document.querySelector('#view-specs .pagination-info');
   if (!tbody) return;
   tbody.innerHTML = SAMPLE.specGroups.map(g => `
-    <tr>
+    <tr draggable="true">
+      <td style="width:32px;padding:0 8px;cursor:grab"><span class="drag-handle" title="拖曳排序">⋮⋮</span></td>
       <td><strong>${g.name}</strong></td>
       <td>${g.fields}</td>
       <td>${g.category}</td>
-      <td>${g.sort}</td>
       <td>${editDeleteBtns('specs-edit')}</td>
     </tr>`).join('');
   if (info) info.textContent = `共 ${SAMPLE.specGroups.length} 筆`;

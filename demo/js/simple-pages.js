@@ -543,17 +543,25 @@ export function initUsers() {
   const tbody = document.querySelector('#view-users .table-wrap tbody');
   const info  = document.querySelector('#view-users .pagination-info');
   if (!tbody) return;
-  tbody.innerHTML = SAMPLE.users.map(u => `
+  tbody.innerHTML = SAMPLE.users.map((u, i) => `
     <tr>
       <td><strong>${u.name}</strong></td>
       <td style="font-size:12px;color:var(--text-2)">${u.email}</td>
       <td>${u.company}</td>
       <td>${u.dept}</td>
       <td>${roleBadge(u.role)}</td>
-      <td>${statusBadge(u.status === 'active')}</td>
+      <td><label class="status-capsule" onclick="event.stopPropagation()">
+        <input type="checkbox" ${u.status === 'active' ? 'checked' : ''}
+          onchange="toggleUserEnabled(${i},this.checked)">
+        <span class="status-capsule-pill"></span>
+      </label></td>
       <td>${editDeleteBtns('users-edit')}</td>
     </tr>`).join('');
   if (info) info.textContent = `共 ${SAMPLE.users.length} 筆`;
+}
+
+export function toggleUserEnabled(idx, enabled) {
+  if (SAMPLE.users[idx]) SAMPLE.users[idx].status = enabled ? 'active' : 'inactive';
 }
 
 export function initUsersEdit() {
@@ -576,13 +584,21 @@ export function initUsersEdit() {
 export function initRoles() {
   const tbody = document.querySelector('#view-roles .table-wrap tbody');
   if (!tbody) return;
-  tbody.innerHTML = SAMPLE.roles.map(r => `
+  tbody.innerHTML = SAMPLE.roles.map((r, i) => `
     <tr>
       <td>${roleBadge(r.name)}</td>
       <td style="font-size:13px">${r.desc}</td>
-      <td>${statusBadge(r.status === 'active')}</td>
+      <td><label class="status-capsule" onclick="event.stopPropagation()">
+        <input type="checkbox" ${r.status === 'active' ? 'checked' : ''}
+          onchange="toggleRoleEnabled(${i},this.checked)">
+        <span class="status-capsule-pill"></span>
+      </label></td>
       <td>${editDeleteBtns('roles-edit')}</td>
     </tr>`).join('');
+}
+
+export function toggleRoleEnabled(idx, enabled) {
+  if (SAMPLE.roles[idx]) SAMPLE.roles[idx].status = enabled ? 'active' : 'inactive';
 }
 
 export function initRolesEdit() {
@@ -1248,6 +1264,7 @@ export function confirmTagLangCopy() {
 }
 
 Object.assign(window, { removeFilesEditProd, openFilesEditProdModal, closeFilesEditProdModal, confirmFilesEditProd,
+  toggleUserEnabled, toggleRoleEnabled,
   onFileCatStatusChange, toggleFileCatEnabled,
   switchFileCatLangTab, openFileCatLangCopyModal, refreshFileCatLangCopyTargets, confirmFileCatLangCopy,
   toggleFilterEnabled,

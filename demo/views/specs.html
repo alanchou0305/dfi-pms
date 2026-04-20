@@ -72,12 +72,43 @@
     </div>
   </div>
   <div class="form-section">
-    <div class="form-section-header" style="justify-content:space-between">
-      規格欄位
-      <button class="btn btn-sm btn-primary">+ 新增欄位</button>
+    <div class="form-section-header">語系管理</div>
+    <div class="form-section-body" style="padding:0">
+      <div class="tabs-card" style="border:none;box-shadow:none;margin:0">
+        <div class="tabs-bar" id="spec-lang-tabs-bar">
+          <!-- rendered by renderSpecLangTabs() -->
+        </div>
+        <div id="spec-lang-tab-panels">
+          <!-- rendered by renderSpecLangTabs() -->
+        </div>
+      </div>
     </div>
-    <div class="form-section-body">
-      <div class="empty-state" style="padding:32px"><div class="empty-state-text">尚無規格欄位</div></div>
+  </div>
+</div>
+
+<!-- Modal: 規格群組語系 — 複製語系內容 -->
+<div id="spec-lang-copy-modal" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h3 class="modal-title">複製語系內容</h3>
+      <button class="modal-close" onclick="document.getElementById('spec-lang-copy-modal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px">
+      <div style="margin-bottom:20px">
+        <div class="form-label" style="margin-bottom:10px">來源語系</div>
+        <div id="spec-lang-copy-source"></div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div class="form-label" style="margin-bottom:10px">複製到</div>
+        <div id="spec-lang-copy-targets"></div>
+      </div>
+      <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:10px 12px;font-size:12px;color:#92400E">
+        此操作將覆蓋目標語系現有的草稿內容，複製後狀態將自動標記為「待同步」。
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('spec-lang-copy-modal').style.display='none'">取消</button>
+      <button class="btn btn-primary" onclick="confirmSpecLangCopy()">確認複製</button>
     </div>
   </div>
 </div>

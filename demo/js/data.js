@@ -472,6 +472,29 @@ export const SAMPLE = {
     },
   },
 
+  specGroupEdit: {
+    name: 'General',
+    category: 'Industrial Motherboards',
+    sort: 1,
+    langStatuses: [
+      { code: 'en', name: 'EN' },
+      { code: 'tw', name: 'TW' },
+      { code: 'cn', name: 'CN' },
+      { code: 'jp', name: 'JP' },
+      { code: 'de', name: 'DE' },
+    ],
+    names: {
+      en: 'General', tw: '通用規格', cn: '通用规格', jp: '一般仕様', de: 'Allgemeines',
+    },
+    fields: [
+      { id: 1, sort: 1, names: { en: 'CPU',        tw: '處理器',       cn: '处理器',       jp: 'CPU',           de: 'CPU'               } },
+      { id: 2, sort: 2, names: { en: 'Chipset',     tw: '晶片組',       cn: '芯片组',       jp: 'チップセット',   de: 'Chipsatz'          } },
+      { id: 3, sort: 3, names: { en: 'Memory',      tw: '記憶體',       cn: '内存',         jp: 'メモリ',         de: 'Arbeitsspeicher'   } },
+      { id: 4, sort: 4, names: { en: 'Storage',     tw: '儲存裝置',     cn: '存储设备',     jp: 'ストレージ',     de: 'Speicher'          } },
+      { id: 5, sort: 5, names: { en: 'OS Support',  tw: '作業系統支援', cn: '操作系统支持', jp: 'OSサポート',     de: 'OS-Unterstützung'  } },
+    ],
+  },
+
   files: [
     { name: 'EC70A-SU Datasheet v1.2',            mainCategory: '文件資料', subCategory: 'Datasheet',         type: 'PDF', status: '啟用', updated: '2026-04-01' },
     { name: 'EC551-CR Quick Start Guide',          mainCategory: '文件資料', subCategory: 'Quick Start Guide', type: 'PDF', status: '啟用', updated: '2026-03-15' },

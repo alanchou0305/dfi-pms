@@ -143,7 +143,7 @@ export function initSpecs() {
 }
 
 export function initSpecsEdit() {
-  const g = SAMPLE.specGroups[0];
+  const g = SAMPLE.specGroupEdit;
   document.querySelectorAll('#view-specs-edit .form-group').forEach(grp => {
     const label = grp.querySelector('.form-label');
     if (!label) return;
@@ -151,24 +151,164 @@ export function initSpecsEdit() {
     const inp  = grp.querySelector('input');
     const sel  = grp.querySelector('select');
     if (text === '群組名稱（識別用）' && inp) inp.value = g.name;
+    if (text === '排序' && inp) inp.value = g.sort;
     if (text === '綁定大分類' && sel) {
       sel.innerHTML = '<option value="">請選擇</option>' +
         SAMPLE.mainCategories.map(c => `<option${c === g.category ? ' selected' : ''}>${c}</option>`).join('');
     }
   });
-  const fieldsBody = document.querySelector('#view-specs-edit .form-section:last-child .form-section-body');
-  if (fieldsBody) {
-    const sampleFields = SAMPLE.productEdit.specs[0].fields;
-    fieldsBody.innerHTML = sampleFields.map((f, i) => `
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
-        <span style="color:var(--text-3);font-size:12px;width:20px;flex-shrink:0">${i + 1}</span>
-        <input class="form-input" type="text" value="${f.label}" placeholder="欄位名稱" style="width:160px;flex-shrink:0" />
-        <select class="form-input" style="width:100px;flex-shrink:0">
-          <option>文字</option><option>數字</option><option>是/否</option>
-        </select>
-        <button class="btn btn-sm btn-danger">刪除</button>
-      </div>`).join('');
+  _specCurrentLang = 'en';
+  renderSpecLangTabs();
+}
+
+// ── Spec group edit state ─────────────────────────────────────
+let _specCurrentLang = 'en';
+let _specNextFieldId = 100;
+
+export function renderSpecLangTabs() {
+  const langs = SAMPLE.specGroupEdit.langStatuses || [];
+  if (!langs.find(l => l.code === _specCurrentLang)) {
+    _specCurrentLang = langs[0]?.code || 'en';
   }
+
+  const tabsBar = document.getElementById('spec-lang-tabs-bar');
+  if (tabsBar) {
+    tabsBar.innerHTML = langs.map(l => {
+      const isActive = l.code === _specCurrentLang;
+      return `<button class="tab-btn${isActive ? ' active' : ''}"
+        data-lang="${l.code}" onclick="switchSpecLangTab('${l.code}')">${l.name}</button>`;
+    }).join('') +
+      `<button class="btn btn-sm btn-secondary lang-tabs-copy-btn" onclick="openSpecLangCopyModal()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        複製語系內容</button>`;
+  }
+
+  const panelsEl = document.getElementById('spec-lang-tab-panels');
+  if (!panelsEl) return;
+
+  panelsEl.innerHTML = langs.map(l => {
+    const isActive  = l.code === _specCurrentLang;
+    const groupName = (SAMPLE.specGroupEdit.names || {})[l.code] || '';
+    const fields    = SAMPLE.specGroupEdit.fields || [];
+
+    const fieldsHtml = fields.length === 0
+      ? `<div class="empty-state" style="padding:24px 0"><div class="empty-state-text">尚無規格欄位</div></div>`
+      : fields.map((f, i) => `
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--text-3);font-size:12px;width:20px;flex-shrink:0">${i + 1}</span>
+            <input class="form-input" type="text" value="${((f.names || {})[l.code] || '').replace(/"/g, '&quot;')}"
+              placeholder="欄位名稱" oninput="updateSpecFieldName(${f.id},'${l.code}',this.value)" style="flex:1" />
+            <button class="btn btn-sm btn-danger" onclick="removeSpecField(${f.id})">刪除</button>
+          </div>`).join('');
+
+    return `<div class="tab-panel lang-tab-panel${isActive ? ' active' : ''}" data-lang-panel="${l.code}">
+      <div class="lang-edit-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">群組顯示名稱</label>
+            <input class="form-input" type="text" value="${groupName.replace(/"/g, '&quot;')}"
+              oninput="updateSpecGroupName('${l.code}',this.value)" />
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label class="form-label" style="margin:0">規格欄位</label>
+          <button class="btn btn-sm btn-primary" onclick="addSpecField()">+ 新增欄位</button>
+        </div>
+        <div id="spec-fields-${l.code}">${fieldsHtml}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+export function switchSpecLangTab(code) {
+  _specCurrentLang = code;
+  document.querySelectorAll('#spec-lang-tabs-bar .tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#spec-lang-tab-panels .lang-tab-panel').forEach(p => p.classList.remove('active'));
+  const btn   = document.querySelector(`#spec-lang-tabs-bar .tab-btn[data-lang="${code}"]`);
+  const panel = document.querySelector(`#spec-lang-tab-panels .lang-tab-panel[data-lang-panel="${code}"]`);
+  if (btn)   btn.classList.add('active');
+  if (panel) panel.classList.add('active');
+}
+
+export function updateSpecGroupName(code, value) {
+  SAMPLE.specGroupEdit.names = SAMPLE.specGroupEdit.names || {};
+  SAMPLE.specGroupEdit.names[code] = value;
+}
+
+export function addSpecField() {
+  const id    = _specNextFieldId++;
+  const names = {};
+  (SAMPLE.specGroupEdit.langStatuses || []).forEach(l => { names[l.code] = ''; });
+  SAMPLE.specGroupEdit.fields = SAMPLE.specGroupEdit.fields || [];
+  SAMPLE.specGroupEdit.fields.push({ id, sort: SAMPLE.specGroupEdit.fields.length + 1, names });
+  renderSpecLangTabs();
+  switchSpecLangTab(_specCurrentLang);
+  const container = document.getElementById(`spec-fields-${_specCurrentLang}`);
+  if (container) {
+    const inputs = container.querySelectorAll('input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }
+}
+
+export function removeSpecField(id) {
+  SAMPLE.specGroupEdit.fields = (SAMPLE.specGroupEdit.fields || []).filter(f => f.id !== id);
+  renderSpecLangTabs();
+  switchSpecLangTab(_specCurrentLang);
+}
+
+export function updateSpecFieldName(id, code, value) {
+  const field = (SAMPLE.specGroupEdit.fields || []).find(f => f.id === id);
+  if (field) {
+    field.names = field.names || {};
+    field.names[code] = value;
+  }
+}
+
+export function openSpecLangCopyModal() {
+  const langs = SAMPLE.specGroupEdit.langStatuses || [];
+  const sourceEl = document.getElementById('spec-lang-copy-source');
+  const targetEl = document.getElementById('spec-lang-copy-targets');
+  if (!sourceEl || !targetEl) return;
+  sourceEl.innerHTML = langs.map(l => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
+      <input type="radio" name="spec-lang-copy-src" value="${l.code}" ${l.code === _specCurrentLang ? 'checked' : ''}
+        onchange="refreshSpecLangCopyTargets()">
+      <span>${l.name}</span>
+    </label>`).join('');
+  refreshSpecLangCopyTargets();
+  document.getElementById('spec-lang-copy-modal').style.display = 'flex';
+}
+
+export function refreshSpecLangCopyTargets() {
+  const langs   = SAMPLE.specGroupEdit.langStatuses || [];
+  const srcCode = (document.querySelector('input[name="spec-lang-copy-src"]:checked') || {}).value;
+  const targetEl = document.getElementById('spec-lang-copy-targets');
+  if (!targetEl) return;
+  targetEl.innerHTML = langs.filter(l => l.code !== srcCode).map(l => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
+      <input type="checkbox" value="${l.code}">
+      <span>${l.name}</span>
+    </label>`).join('');
+}
+
+export function confirmSpecLangCopy() {
+  const srcCode = (document.querySelector('input[name="spec-lang-copy-src"]:checked') || {}).value;
+  if (!srcCode) return;
+  const srcGroupName = (SAMPLE.specGroupEdit.names || {})[srcCode] || '';
+  const targets = [...document.querySelectorAll('#spec-lang-copy-targets input[type=checkbox]:checked')]
+    .map(cb => cb.value);
+  targets.forEach(code => {
+    SAMPLE.specGroupEdit.names = SAMPLE.specGroupEdit.names || {};
+    SAMPLE.specGroupEdit.names[code] = srcGroupName;
+    (SAMPLE.specGroupEdit.fields || []).forEach(f => {
+      f.names = f.names || {};
+      f.names[code] = (f.names[srcCode] || '');
+    });
+  });
+  document.getElementById('spec-lang-copy-modal').style.display = 'none';
+  renderSpecLangTabs();
+  switchSpecLangTab(_specCurrentLang);
 }
 
 export function initFiles() {
@@ -1285,4 +1425,6 @@ Object.assign(window, { removeFilesEditProd, openFilesEditProdModal, closeFilesE
   enableTagLang, openTagLangDisableModal, confirmTagLangDisable,
   toggleTagLangTabMenu, closeTagLangTabMenu,
   openTagLangCopyModal, refreshTagLangCopyTargets, confirmTagLangCopy,
+  switchSpecLangTab, updateSpecGroupName, addSpecField, removeSpecField, updateSpecFieldName,
+  openSpecLangCopyModal, refreshSpecLangCopyTargets, confirmSpecLangCopy,
 });

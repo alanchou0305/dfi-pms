@@ -1,5 +1,5 @@
 import { SAMPLE } from './data.js';
-import { langDotsHtml, statusBadge, typeBadge, actionBadge, errorTypeBadge, roleBadge, editDeleteBtns } from './helpers.js';
+import { langDotsHtml, langPublishBadge, statusBadge, typeBadge, actionBadge, errorTypeBadge, roleBadge, editDeleteBtns } from './helpers.js';
 import { buildCatTree } from './categories.js';
 
 // ── File edit state ────────────────────────────────────────────
@@ -23,14 +23,11 @@ export function initFilters() {
 }
 
 export function initFiltersEdit() {
+  _filterCurrentLang = 'en';
+  _filterDirtyLangs  = new Set();
+  renderFilterLangTabs();
+
   const f = SAMPLE.filters[0];
-  document.querySelectorAll('#view-filters-edit .form-group').forEach(grp => {
-    const label = grp.querySelector('.form-label');
-    if (label && label.textContent.trim() === '篩選器名稱') {
-      const inp = grp.querySelector('input');
-      if (inp) inp.value = f.name;
-    }
-  });
   const optBody = document.querySelector('#view-filters-edit .form-section:last-child .form-section-body');
   if (optBody) {
     optBody.innerHTML = f.options.map((opt, i) => `
@@ -56,16 +53,9 @@ export function initTags() {
 }
 
 export function initTagsEdit() {
-  const t = SAMPLE.tags[0];
-  document.querySelectorAll('#view-tags-edit .form-group').forEach(grp => {
-    const label = grp.querySelector('.form-label');
-    if (!label) return;
-    const text = label.textContent.trim();
-    const inp  = grp.querySelector('input');
-    if (text === 'URL Slug'  && inp) inp.value = t.slug;
-    if (text === 'Tag 名稱'  && inp) inp.value = t.name;
-    if (text === 'H1 標題'   && inp) inp.value = t.name;
-  });
+  _tagCurrentLang = 'en';
+  _tagDirtyLangs  = new Set();
+  renderTagLangTabs();
 }
 
 export function initSpecs() {
@@ -352,6 +342,14 @@ export function closeFilesEditProdModal() {
 const FC_ICON_FOLDER = `<svg class="cat-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
 const FC_ICON_FILE   = `<svg class="cat-icon cat-icon-sub" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
 
+function _fileCatToggleHtml(name, enabled) {
+  return `<label class="status-capsule" onclick="event.stopPropagation()">
+    <input type="checkbox" data-filecat-toggle="${name}" ${enabled ? 'checked' : ''}
+      onchange="toggleFileCatEnabled('${name.replace(/'/g,"\\''")}',this.checked)">
+    <span class="status-capsule-pill"></span>
+  </label>`;
+}
+
 export function initFileCategories() {
   const tree = document.getElementById('file-cat-tree');
   if (!tree) return;
@@ -359,20 +357,24 @@ export function initFileCategories() {
   tree.innerHTML = parents.map(p => {
     const children = SAMPLE.fileCategories.filter(c => c.parent === p.name);
     return `
-      <div class="cat-node cat-parent" data-name="${p.name}">
+      <div class="cat-node cat-parent" draggable="true" data-name="${p.name}">
         <div class="cat-node-row">
+          <span class="drag-handle" title="拖曳排序">⋮⋮</span>
           <button class="cat-toggle open" title="折疊">▾</button>
           ${FC_ICON_FOLDER}
-          <span class="cat-name">${p.name}</span>
+          <span class="cat-name${p.enabled === false ? ' cat-name-off' : ''}">${p.name}</span>
+          ${_fileCatToggleHtml(p.name, p.enabled !== false)}
           <div class="cat-actions">${editDeleteBtns('file-categories-edit')}</div>
         </div>
         <div class="cat-children">
           ${children.map(c => `
-            <div class="cat-node cat-child" data-name="${c.name}">
+            <div class="cat-node cat-child" draggable="true" data-name="${c.name}" data-parent="${p.name}">
               <div class="cat-node-row">
+                <span class="drag-handle" title="拖曳排序">⋮⋮</span>
                 <span class="cat-toggle-spacer"></span>
                 ${FC_ICON_FILE}
-                <span class="cat-name">${c.name}</span>
+                <span class="cat-name${c.enabled === false ? ' cat-name-off' : ''}">${c.name}</span>
+                ${_fileCatToggleHtml(c.name, c.enabled !== false)}
                 <div class="cat-actions">${editDeleteBtns('file-categories-edit')}</div>
               </div>
             </div>`).join('')}
@@ -390,6 +392,92 @@ export function initFileCategories() {
       children.style.display = open ? '' : 'none';
     });
   });
+
+  setupFileCatDnD(tree);
+}
+
+function setupFileCatDnD(treeEl) {
+  if (treeEl.dataset.dndAttached) return;
+  treeEl.dataset.dndAttached = '1';
+  let dragSrc = null;
+
+  treeEl.addEventListener('dragstart', e => {
+    const child = e.target.closest('.cat-child');
+    if (child) { dragSrc = child; child.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; return; }
+    const parent = e.target.closest('.cat-parent');
+    if (parent) { dragSrc = parent; parent.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+  });
+
+  treeEl.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (!dragSrc) return;
+    if (dragSrc.classList.contains('cat-parent')) {
+      const target = e.target.closest('.cat-parent');
+      if (!target || target === dragSrc) return;
+      treeEl.querySelectorAll('.cat-parent.drag-over').forEach(n => n.classList.remove('drag-over'));
+      target.classList.add('drag-over');
+    } else {
+      const target = e.target.closest('.cat-child');
+      if (!target || target === dragSrc || target.dataset.parent !== dragSrc.dataset.parent) return;
+      treeEl.querySelectorAll('.cat-child.drag-over').forEach(n => n.classList.remove('drag-over'));
+      target.classList.add('drag-over');
+    }
+  });
+
+  treeEl.addEventListener('dragleave', e => {
+    if (!treeEl.contains(e.relatedTarget)) {
+      treeEl.querySelectorAll('.drag-over').forEach(n => n.classList.remove('drag-over'));
+    }
+  });
+
+  treeEl.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!dragSrc) return;
+    if (dragSrc.classList.contains('cat-parent')) {
+      const target = e.target.closest('.cat-parent');
+      if (!target || target === dragSrc) return;
+      const parents = SAMPLE.fileCategories.filter(c => !c.parent);
+      const si = parents.findIndex(c => c.name === dragSrc.dataset.name);
+      const di = parents.findIndex(c => c.name === target.dataset.name);
+      if (si < 0 || di < 0) return;
+      const [moved] = parents.splice(si, 1);
+      parents.splice(di, 0, moved);
+      // rebuild fileCategories preserving children order under each parent
+      const children = SAMPLE.fileCategories.filter(c => c.parent);
+      SAMPLE.fileCategories = [
+        ...parents,
+        ...parents.flatMap(p => children.filter(c => c.parent === p.name)),
+      ];
+    } else {
+      const target = e.target.closest('.cat-child');
+      if (!target || target === dragSrc || target.dataset.parent !== dragSrc.dataset.parent) return;
+      const pName = dragSrc.dataset.parent;
+      const siblings = SAMPLE.fileCategories.filter(c => c.parent === pName);
+      const si = siblings.findIndex(c => c.name === dragSrc.dataset.name);
+      const di = siblings.findIndex(c => c.name === target.dataset.name);
+      if (si < 0 || di < 0) return;
+      const [moved] = siblings.splice(si, 1);
+      siblings.splice(di, 0, moved);
+      SAMPLE.fileCategories = [
+        ...SAMPLE.fileCategories.filter(c => !c.parent),
+        ...SAMPLE.fileCategories.filter(c => c.parent).map(c => c.parent === pName ? siblings.shift() || c : c),
+      ];
+    }
+    dragSrc = null;
+    initFileCategories();
+  });
+
+  treeEl.addEventListener('dragend', () => {
+    treeEl.querySelectorAll('.dragging, .drag-over').forEach(n => n.classList.remove('dragging', 'drag-over'));
+    dragSrc = null;
+  });
+}
+
+export function toggleFileCatEnabled(name, enabled) {
+  const cat = SAMPLE.fileCategories.find(c => c.name === name);
+  if (cat) cat.enabled = enabled;
+  const nameEl = document.querySelector(`.cat-node[data-name="${name}"] > .cat-node-row .cat-name`);
+  if (nameEl) nameEl.classList.toggle('cat-name-off', !enabled);
 }
 
 export function initUsers() {
@@ -523,4 +611,683 @@ export function initSmtpEdit() {
   if (encSel) encSel.value = 'TLS';
 }
 
-Object.assign(window, { removeFilesEditProd, openFilesEditProdModal, closeFilesEditProdModal, confirmFilesEditProd });
+export function initFileCategoriesEdit() {
+  _fileCatCurrentLang = 'en';
+  _fileCatDirtyLangs  = new Set();
+
+  const cb = document.getElementById('filecat-status-checkbox');
+  if (cb) { cb.checked = SAMPLE.fileCategoryEdit.enabled !== false; onFileCatStatusChange(cb.checked); }
+
+  renderFileCategoryLangTabs();
+}
+
+export function onFileCatStatusChange(enabled) {
+  const warning = document.getElementById('filecat-status-warning');
+  if (warning) warning.style.display = enabled ? 'none' : 'flex';
+  SAMPLE.fileCategoryEdit.enabled = enabled;
+}
+
+// ── File-category language tab state ─────────────────────────
+let _fileCatCurrentLang        = 'en';
+let _fileCatDirtyLangs         = new Set();
+let _fileCatPendingDisableLang = null;
+
+export function renderFileCategoryLangTabs() {
+  const langs = SAMPLE.fileCategoryEdit.langStatuses || [];
+
+  if (!langs.find(l => l.code === _fileCatCurrentLang)) {
+    _fileCatCurrentLang = langs[0]?.code || 'en';
+  }
+
+  const tabsBar = document.getElementById('filecat-lang-tabs-bar');
+  if (tabsBar) {
+    tabsBar.innerHTML = langs.map(l => {
+      const isActive = l.code === _fileCatCurrentLang;
+      return `<button class="tab-btn${isActive ? ' active' : ''}"
+        data-lang="${l.code}" onclick="switchFileCatLangTab('${l.code}')">${l.name}</button>`;
+    }).join('') +
+      `<button class="btn btn-sm btn-secondary lang-tabs-copy-btn" onclick="openFileCatLangCopyModal()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        複製語系內容</button>`;
+  }
+
+  const panelsEl = document.getElementById('filecat-lang-tab-panels');
+  if (!panelsEl) return;
+
+  panelsEl.innerHTML = langs.map(l => {
+    const isActive = l.code === _fileCatCurrentLang;
+    const name     = (SAMPLE.fileCategoryEdit.names || {})[l.code] || '';
+    return `<div class="tab-panel lang-tab-panel${isActive ? ' active' : ''}" data-lang-panel="${l.code}">
+      <div class="lang-edit-body">
+        <div class="form-group">
+          <label class="form-label">分類名稱</label>
+          <input class="form-input" type="text" value="${name.replace(/"/g, '&quot;')}" />
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+export function switchFileCatLangTab(code) {
+  _fileCatCurrentLang = code;
+  document.querySelectorAll('#filecat-lang-tabs-bar .tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#filecat-lang-tab-panels .lang-tab-panel').forEach(p => p.classList.remove('active'));
+  const btn   = document.querySelector(`#filecat-lang-tabs-bar .tab-btn[data-lang="${code}"]`);
+  const panel = document.querySelector(`#filecat-lang-tab-panels .lang-tab-panel[data-lang-panel="${code}"]`);
+  if (btn)   btn.classList.add('active');
+  if (panel) panel.classList.add('active');
+}
+
+function _onFileCatLangPanelInput(e) {
+  const panel = e.target.closest('.lang-tab-panel');
+  if (!panel || !panel.dataset.langPanel) return;
+  _markFileCatLangDirty(panel.dataset.langPanel);
+}
+
+function _markFileCatLangDirty(code) {
+  _fileCatDirtyLangs.add(code);
+  const panel = document.querySelector(`#filecat-lang-tab-panels .lang-tab-panel[data-lang-panel="${code}"]`);
+  if (panel) panel.querySelectorAll('.lang-dirty-btn').forEach(b => { b.disabled = false; });
+  const tabBtn = document.querySelector(`#filecat-lang-tabs-bar .tab-btn[data-lang="${code}"]`);
+  if (tabBtn) tabBtn.classList.add('tab-btn-dirty');
+}
+
+export function saveFileCatLangDraft(code) {
+  _fileCatDirtyLangs.delete(code);
+  const panel  = document.querySelector(`#filecat-lang-tab-panels .lang-tab-panel[data-lang-panel="${code}"]`);
+  const tabBtn = document.querySelector(`#filecat-lang-tabs-bar .tab-btn[data-lang="${code}"]`);
+  if (tabBtn) tabBtn.classList.remove('tab-btn-dirty');
+  if (panel) {
+    const saveBtn = panel.querySelector('.btn-secondary.lang-dirty-btn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '已儲存'; setTimeout(() => { saveBtn.textContent = '儲存草稿'; }, 1500); }
+  }
+}
+
+export function publishFileCatLang(code) {
+  const lang = (SAMPLE.fileCategoryEdit.langStatuses || []).find(l => l.code === code);
+  if (lang) { lang.status = 'synced'; lang.lastSynced = '2026-04-20'; }
+  _fileCatDirtyLangs.delete(code);
+  renderFileCategoryLangTabs();
+  switchFileCatLangTab(code);
+}
+
+export function retryFileCatSync(code) { publishFileCatLang(code); }
+
+export function enableFileCatLang(code) {
+  const lang = (SAMPLE.fileCategoryEdit.langStatuses || []).find(l => l.code === code);
+  if (lang) { delete lang.disabled; lang.status = 'draft'; }
+  _fileCatCurrentLang = code;
+  renderFileCategoryLangTabs();
+}
+
+export function openFileCatLangDisableModal(code) {
+  _fileCatPendingDisableLang = code;
+  const lang = (SAMPLE.fileCategoryEdit.langStatuses || []).find(l => l.code === code);
+  const nameEl = document.getElementById('filecat-disable-lang-name');
+  if (nameEl && lang) nameEl.textContent = lang.name;
+  document.getElementById('filecat-lang-disable-modal').style.display = 'flex';
+}
+
+export function confirmFileCatLangDisable() {
+  const lang = (SAMPLE.fileCategoryEdit.langStatuses || []).find(l => l.code === _fileCatPendingDisableLang);
+  if (lang) { lang.disabled = true; lang.status = 'draft'; lang.lastSynced = null; delete lang.syncError; }
+  document.getElementById('filecat-lang-disable-modal').style.display = 'none';
+  _fileCatPendingDisableLang = null;
+  const firstEnabled = (SAMPLE.fileCategoryEdit.langStatuses || []).find(l => !l.disabled);
+  if (firstEnabled) _fileCatCurrentLang = firstEnabled.code;
+  renderFileCategoryLangTabs();
+}
+
+export function toggleFileCatLangTabMenu(event, code) {
+  event.stopPropagation();
+  const dd = document.getElementById(`filecat-lang-tab-menu-${code}`);
+  if (!dd) return;
+  const isOpen = dd.classList.contains('open');
+  document.querySelectorAll('.more-menu-dropdown.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) dd.classList.add('open');
+}
+
+export function closeFileCatLangTabMenu(code) {
+  const dd = document.getElementById(`filecat-lang-tab-menu-${code}`);
+  if (dd) dd.classList.remove('open');
+}
+
+export function openFileCatLangCopyModal() {
+  const langs = (SAMPLE.fileCategoryEdit.langStatuses || []).filter(l => !l.disabled);
+  const sourceEl = document.getElementById('filecat-lang-copy-source');
+  const targetEl = document.getElementById('filecat-lang-copy-targets');
+  if (!sourceEl || !targetEl) return;
+  sourceEl.innerHTML = langs.map(l => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
+      <input type="radio" name="filecat-lang-copy-src" value="${l.code}" ${l.code===_fileCatCurrentLang?'checked':''}
+        onchange="refreshFileCatLangCopyTargets()">
+      <span>${l.name}</span>
+    </label>`).join('');
+  refreshFileCatLangCopyTargets();
+  document.getElementById('filecat-lang-copy-modal').style.display = 'flex';
+}
+
+export function refreshFileCatLangCopyTargets() {
+  const langs   = (SAMPLE.fileCategoryEdit.langStatuses || []).filter(l => !l.disabled);
+  const srcCode = (document.querySelector('input[name="filecat-lang-copy-src"]:checked') || {}).value;
+  const targetEl = document.getElementById('filecat-lang-copy-targets');
+  if (!targetEl) return;
+  targetEl.innerHTML = langs.filter(l => l.code !== srcCode).map(l => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
+      <input type="checkbox" value="${l.code}">
+      <span>${l.name}</span>
+    </label>`).join('');
+}
+
+export function confirmFileCatLangCopy() {
+  const srcCode = (document.querySelector('input[name="filecat-lang-copy-src"]:checked') || {}).value;
+  if (!srcCode) return;
+  const srcName = (SAMPLE.fileCategoryEdit.names || {})[srcCode] || '';
+  const targets = [...document.querySelectorAll('#filecat-lang-copy-targets input[type=checkbox]:checked')]
+    .map(cb => cb.value);
+  targets.forEach(code => {
+    SAMPLE.fileCategoryEdit.names = SAMPLE.fileCategoryEdit.names || {};
+    SAMPLE.fileCategoryEdit.names[code] = srcName;
+    const lang = (SAMPLE.fileCategoryEdit.langStatuses || []).find(l => l.code === code);
+    if (lang) lang.status = 'pending';
+  });
+  document.getElementById('filecat-lang-copy-modal').style.display = 'none';
+  renderFileCategoryLangTabs();
+  switchFileCatLangTab(_fileCatCurrentLang);
+}
+
+// ── Filter language tab state ─────────────────────────────────
+let _filterCurrentLang        = 'en';
+let _filterDirtyLangs         = new Set();
+let _filterPendingDisableLang = null;
+
+export function renderFilterLangTabs() {
+  const langs = SAMPLE.filterEdit.langStatuses || [];
+
+  const firstEnabled = langs.find(l => !l.disabled);
+  if (firstEnabled && !langs.find(l => l.code === _filterCurrentLang && !l.disabled)) {
+    _filterCurrentLang = firstEnabled.code;
+  }
+
+  const tabsBar = document.getElementById('filter-lang-tabs-bar');
+  if (tabsBar) {
+    const btnHtml = langs.map(l => {
+      const isActive = l.code === _filterCurrentLang && !l.disabled;
+      const isOff    = l.disabled === true;
+      const isDirty  = _filterDirtyLangs.has(l.code);
+      const dotClass = isOff                  ? 'dot-disabled' :
+        l.status === 'synced'                 ? 'dot-synced'   :
+        l.status === 'sync_failed'            ? 'dot-error'    :
+        l.status === 'pending'                ? 'dot-pending'  : 'dot-draft';
+      return `<button class="tab-btn${isActive?' active':''}${isOff?' tab-btn-lang-off':''}${isDirty?' tab-btn-dirty':''}"
+        data-lang="${l.code}" onclick="switchFilterLangTab('${l.code}')"
+        ${isOff?'title="此語系已停用"':''}>${l.name}<span class="lang-tab-dot ${dotClass}"></span></button>`;
+    }).join('');
+    tabsBar.innerHTML = btnHtml +
+      `<button class="btn btn-sm btn-secondary lang-tabs-copy-btn" onclick="openFilterLangCopyModal()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        複製語系內容</button>`;
+  }
+
+  const panelsEl = document.getElementById('filter-lang-tab-panels');
+  if (!panelsEl) return;
+
+  panelsEl.innerHTML = langs.map(l => {
+    const isActive = l.code === _filterCurrentLang && !l.disabled;
+    const isOff    = l.disabled === true;
+
+    if (isOff) {
+      return `<div class="tab-panel lang-tab-panel${isActive?' active':''}" data-lang-panel="${l.code}">
+        <div class="lang-tab-disabled-state">
+          <svg class="lang-tab-disabled-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          <div class="lang-tab-disabled-title">${l.name} 語系已停用</div>
+          <div class="lang-tab-disabled-desc">停用後此語系頁面不對外顯示。啟用後即可開始編輯內容。</div>
+          <button class="btn btn-primary" onclick="enableFilterLang('${l.code}')">啟用語系</button>
+        </div>
+      </div>`;
+    }
+
+    const name     = (SAMPLE.filterEdit.names || {})[l.code] || '';
+    const isDirty  = _filterDirtyLangs.has(l.code);
+    const isFailed = l.status === 'sync_failed';
+
+    const saveBtn = `<button class="btn btn-sm btn-secondary lang-dirty-btn"
+      onclick="saveFilterLangDraft('${l.code}')"${isDirty?'':' disabled'}>儲存草稿</button>`;
+    const publishDisabled = !isFailed && l.status === 'synced' && !isDirty;
+    const publishBtn = isFailed
+      ? `<button class="btn btn-sm btn-primary" style="background:#DC2626;border-color:#DC2626"
+          onclick="retryFilterSync('${l.code}')">重試發佈</button>`
+      : `<button class="btn btn-sm btn-primary lang-dirty-btn"
+          onclick="publishFilterLang('${l.code}')"${publishDisabled?' disabled':''}>發佈</button>`;
+
+    const syncDateTxt   = l.lastSynced ? '最後發佈：' + l.lastSynced : '尚未發佈';
+    const syncDateStyle = isFailed ? ' style="color:#DC2626"' : '';
+    const syncExtra     = isFailed ? `（${l.syncError || '發佈失敗'}）` : '';
+
+    return `<div class="tab-panel lang-tab-panel${isActive?' active':''}" data-lang-panel="${l.code}">
+      <div class="lang-tab-hd">
+        <div class="lang-tab-hd-left">
+          ${langPublishBadge(l)}
+          <span class="lang-tab-sync-date"${syncDateStyle}>${syncDateTxt}${syncExtra}</span>
+        </div>
+        <div class="lang-tab-hd-right">
+          ${saveBtn}
+          ${publishBtn}
+          <div class="more-menu">
+            <button class="btn-icon" onclick="toggleFilterLangTabMenu(event,'${l.code}')" title="更多">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+            <div class="more-menu-dropdown" id="filter-lang-tab-menu-${l.code}">
+              <button class="more-menu-item danger" onclick="openFilterLangDisableModal('${l.code}');closeFilterLangTabMenu('${l.code}')">停用此語系</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="lang-edit-body">
+        <div class="form-group">
+          <label class="form-label">篩選器名稱</label>
+          <input class="form-input" type="text" value="${name.replace(/"/g,'&quot;')}" />
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  if (!panelsEl._filterDirtyListenerAttached) {
+    panelsEl.addEventListener('input', _onFilterLangPanelInput);
+    panelsEl._filterDirtyListenerAttached = true;
+  }
+}
+
+export function switchFilterLangTab(code) {
+  _filterCurrentLang = code;
+  document.querySelectorAll('#filter-lang-tabs-bar .tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#filter-lang-tab-panels .lang-tab-panel').forEach(p => p.classList.remove('active'));
+  const btn   = document.querySelector(`#filter-lang-tabs-bar .tab-btn[data-lang="${code}"]`);
+  const panel = document.querySelector(`#filter-lang-tab-panels .lang-tab-panel[data-lang-panel="${code}"]`);
+  if (btn)   btn.classList.add('active');
+  if (panel) panel.classList.add('active');
+}
+
+function _onFilterLangPanelInput(e) {
+  const panel = e.target.closest('.lang-tab-panel');
+  if (!panel || !panel.dataset.langPanel) return;
+  _markFilterLangDirty(panel.dataset.langPanel);
+}
+
+function _markFilterLangDirty(code) {
+  _filterDirtyLangs.add(code);
+  const panel = document.querySelector(`#filter-lang-tab-panels .lang-tab-panel[data-lang-panel="${code}"]`);
+  if (panel) panel.querySelectorAll('.lang-dirty-btn').forEach(b => { b.disabled = false; });
+  const tabBtn = document.querySelector(`#filter-lang-tabs-bar .tab-btn[data-lang="${code}"]`);
+  if (tabBtn) tabBtn.classList.add('tab-btn-dirty');
+}
+
+export function saveFilterLangDraft(code) {
+  _filterDirtyLangs.delete(code);
+  const panel  = document.querySelector(`#filter-lang-tab-panels .lang-tab-panel[data-lang-panel="${code}"]`);
+  const tabBtn = document.querySelector(`#filter-lang-tabs-bar .tab-btn[data-lang="${code}"]`);
+  if (tabBtn) tabBtn.classList.remove('tab-btn-dirty');
+  if (panel) {
+    const saveBtn = panel.querySelector('.btn-secondary.lang-dirty-btn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '已儲存'; setTimeout(() => { saveBtn.textContent = '儲存草稿'; }, 1500); }
+  }
+}
+
+export function publishFilterLang(code) {
+  const lang = (SAMPLE.filterEdit.langStatuses || []).find(l => l.code === code);
+  if (lang) { lang.status = 'synced'; lang.lastSynced = '2026-04-20'; }
+  _filterDirtyLangs.delete(code);
+  renderFilterLangTabs();
+  switchFilterLangTab(code);
+}
+
+export function retryFilterSync(code) { publishFilterLang(code); }
+
+export function enableFilterLang(code) {
+  const lang = (SAMPLE.filterEdit.langStatuses || []).find(l => l.code === code);
+  if (lang) { delete lang.disabled; lang.status = 'draft'; }
+  _filterCurrentLang = code;
+  renderFilterLangTabs();
+}
+
+export function openFilterLangDisableModal(code) {
+  _filterPendingDisableLang = code;
+  const lang = (SAMPLE.filterEdit.langStatuses || []).find(l => l.code === code);
+  const nameEl = document.getElementById('filter-disable-lang-name');
+  if (nameEl && lang) nameEl.textContent = lang.name;
+  document.getElementById('filter-lang-disable-modal').style.display = 'flex';
+}
+
+export function confirmFilterLangDisable() {
+  const lang = (SAMPLE.filterEdit.langStatuses || []).find(l => l.code === _filterPendingDisableLang);
+  if (lang) { lang.disabled = true; lang.status = 'draft'; lang.lastSynced = null; delete lang.syncError; }
+  document.getElementById('filter-lang-disable-modal').style.display = 'none';
+  _filterPendingDisableLang = null;
+  const firstEnabled = (SAMPLE.filterEdit.langStatuses || []).find(l => !l.disabled);
+  if (firstEnabled) _filterCurrentLang = firstEnabled.code;
+  renderFilterLangTabs();
+}
+
+export function toggleFilterLangTabMenu(event, code) {
+  event.stopPropagation();
+  const dd = document.getElementById(`filter-lang-tab-menu-${code}`);
+  if (!dd) return;
+  const isOpen = dd.classList.contains('open');
+  document.querySelectorAll('.more-menu-dropdown.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) dd.classList.add('open');
+}
+
+export function closeFilterLangTabMenu(code) {
+  const dd = document.getElementById(`filter-lang-tab-menu-${code}`);
+  if (dd) dd.classList.remove('open');
+}
+
+export function openFilterLangCopyModal() {
+  const langs = (SAMPLE.filterEdit.langStatuses || []).filter(l => !l.disabled);
+  const sourceEl = document.getElementById('filter-lang-copy-source');
+  const targetEl = document.getElementById('filter-lang-copy-targets');
+  if (!sourceEl || !targetEl) return;
+  sourceEl.innerHTML = langs.map(l => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
+      <input type="radio" name="filter-lang-copy-src" value="${l.code}" ${l.code===_filterCurrentLang?'checked':''}
+        onchange="refreshFilterLangCopyTargets()">
+      <span>${l.name}</span>
+    </label>`).join('');
+  refreshFilterLangCopyTargets();
+  document.getElementById('filter-lang-copy-modal').style.display = 'flex';
+}
+
+export function refreshFilterLangCopyTargets() {
+  const langs   = (SAMPLE.filterEdit.langStatuses || []).filter(l => !l.disabled);
+  const srcCode = (document.querySelector('input[name="filter-lang-copy-src"]:checked') || {}).value;
+  const targetEl = document.getElementById('filter-lang-copy-targets');
+  if (!targetEl) return;
+  targetEl.innerHTML = langs.filter(l => l.code !== srcCode).map(l => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
+      <input type="checkbox" value="${l.code}">
+      <span>${l.name}</span>
+    </label>`).join('');
+}
+
+export function confirmFilterLangCopy() {
+  const srcCode = (document.querySelector('input[name="filter-lang-copy-src"]:checked') || {}).value;
+  if (!srcCode) return;
+  const srcName = (SAMPLE.filterEdit.names || {})[srcCode] || '';
+  const targets = [...document.querySelectorAll('#filter-lang-copy-targets input[type=checkbox]:checked')]
+    .map(cb => cb.value);
+  targets.forEach(code => {
+    SAMPLE.filterEdit.names = SAMPLE.filterEdit.names || {};
+    SAMPLE.filterEdit.names[code] = srcName;
+    const lang = (SAMPLE.filterEdit.langStatuses || []).find(l => l.code === code);
+    if (lang) lang.status = 'pending';
+  });
+  document.getElementById('filter-lang-copy-modal').style.display = 'none';
+  renderFilterLangTabs();
+  switchFilterLangTab(_filterCurrentLang);
+}
+
+// ── Tag language tab state ────────────────────────────────────
+let _tagCurrentLang        = 'en';
+let _tagDirtyLangs         = new Set();
+let _tagPendingDisableLang = null;
+
+export function renderTagLangTabs() {
+  const langs = SAMPLE.tagEdit.langStatuses || [];
+
+  const firstEnabled = langs.find(l => !l.disabled);
+  if (firstEnabled && !langs.find(l => l.code === _tagCurrentLang && !l.disabled)) {
+    _tagCurrentLang = firstEnabled.code;
+  }
+
+  const tabsBar = document.getElementById('tag-lang-tabs-bar');
+  if (tabsBar) {
+    const btnHtml = langs.map(l => {
+      const isActive = l.code === _tagCurrentLang && !l.disabled;
+      const isOff    = l.disabled === true;
+      const isDirty  = _tagDirtyLangs.has(l.code);
+      const dotClass = isOff                  ? 'dot-disabled' :
+        l.status === 'synced'                 ? 'dot-synced'   :
+        l.status === 'sync_failed'            ? 'dot-error'    :
+        l.status === 'pending'                ? 'dot-pending'  :
+        l.status === 'needs_update'           ? 'dot-pending'  : 'dot-draft';
+      return `<button class="tab-btn${isActive?' active':''}${isOff?' tab-btn-lang-off':''}${isDirty?' tab-btn-dirty':''}"
+        data-lang="${l.code}" onclick="switchTagLangTab('${l.code}')"
+        ${isOff?'title="此語系已停用"':''}>${l.name}<span class="lang-tab-dot ${dotClass}"></span></button>`;
+    }).join('');
+    tabsBar.innerHTML = btnHtml +
+      `<button class="btn btn-sm btn-secondary lang-tabs-copy-btn" onclick="openTagLangCopyModal()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        複製語系內容</button>`;
+  }
+
+  const panelsEl = document.getElementById('tag-lang-tab-panels');
+  if (!panelsEl) return;
+
+  panelsEl.innerHTML = langs.map(l => {
+    const isActive = l.code === _tagCurrentLang && !l.disabled;
+    const isOff    = l.disabled === true;
+
+    if (isOff) {
+      return `<div class="tab-panel lang-tab-panel${isActive?' active':''}" data-lang-panel="${l.code}">
+        <div class="lang-tab-disabled-state">
+          <svg class="lang-tab-disabled-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          <div class="lang-tab-disabled-title">${l.name} 語系已停用</div>
+          <div class="lang-tab-disabled-desc">停用後此語系頁面不對外顯示。啟用後即可開始編輯內容。</div>
+          <button class="btn btn-primary" onclick="enableTagLang('${l.code}')">啟用語系</button>
+        </div>
+      </div>`;
+    }
+
+    const content  = (SAMPLE.tagEdit.landings || {})[l.code] || {};
+    const isDirty  = _tagDirtyLangs.has(l.code);
+    const isFailed = l.status === 'sync_failed';
+
+    const saveBtn = `<button class="btn btn-sm btn-secondary lang-dirty-btn"
+      onclick="saveTagLangDraft('${l.code}')"${isDirty?'':' disabled'}>儲存草稿</button>`;
+    const publishDisabled = !isFailed && l.status === 'synced' && !isDirty;
+    const publishBtn = isFailed
+      ? `<button class="btn btn-sm btn-primary" style="background:#DC2626;border-color:#DC2626"
+          onclick="retryTagSync('${l.code}')">重試發佈</button>`
+      : `<button class="btn btn-sm btn-primary lang-dirty-btn"
+          onclick="publishTagLang('${l.code}')"${publishDisabled?' disabled':''}>發佈</button>`;
+
+    const syncDateTxt   = l.lastSynced ? '最後發佈：' + l.lastSynced : '尚未發佈';
+    const syncDateStyle = isFailed ? ' style="color:#DC2626"' : '';
+    const syncExtra     = isFailed ? `（${l.syncError || '發佈失敗'}）` : '';
+
+    return `<div class="tab-panel lang-tab-panel${isActive?' active':''}" data-lang-panel="${l.code}">
+      <div class="lang-tab-hd">
+        <div class="lang-tab-hd-left">
+          ${langPublishBadge(l)}
+          <span class="lang-tab-sync-date"${syncDateStyle}>${syncDateTxt}${syncExtra}</span>
+        </div>
+        <div class="lang-tab-hd-right">
+          ${saveBtn}
+          ${publishBtn}
+          <div class="more-menu">
+            <button class="btn-icon" onclick="toggleTagLangTabMenu(event,'${l.code}')" title="更多">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+            <div class="more-menu-dropdown" id="tag-lang-tab-menu-${l.code}">
+              <button class="more-menu-item danger" onclick="openTagLangDisableModal('${l.code}');closeTagLangTabMenu('${l.code}')">停用此語系</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="lang-edit-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">URL Slug</label>
+            <input class="form-input" type="text" value="${(content.slug||'').replace(/"/g,'&quot;')}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tag 名稱</label>
+            <input class="form-input" type="text" value="${(content.name||'').replace(/"/g,'&quot;')}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">H1 標題</label>
+            <input class="form-input" type="text" value="${(content.h1||'').replace(/"/g,'&quot;')}" />
+          </div>
+          <div class="form-group form-full">
+            <label class="form-label">內容</label>
+            <div class="richtext-placeholder">富文字編輯器</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">SEO Title</label>
+            <input class="form-input" type="text" value="${(content.seoTitle||'').replace(/"/g,'&quot;')}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">SEO Description</label>
+            <textarea class="form-input" rows="2">${(content.seoDesc||'').replace(/</g,'&lt;')}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  if (!panelsEl._tagDirtyListenerAttached) {
+    panelsEl.addEventListener('input', _onTagLangPanelInput);
+    panelsEl._tagDirtyListenerAttached = true;
+  }
+}
+
+export function switchTagLangTab(code) {
+  _tagCurrentLang = code;
+  document.querySelectorAll('#tag-lang-tabs-bar .tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#tag-lang-tab-panels .lang-tab-panel').forEach(p => p.classList.remove('active'));
+  const btn   = document.querySelector(`#tag-lang-tabs-bar .tab-btn[data-lang="${code}"]`);
+  const panel = document.querySelector(`#tag-lang-tab-panels .lang-tab-panel[data-lang-panel="${code}"]`);
+  if (btn)   btn.classList.add('active');
+  if (panel) panel.classList.add('active');
+}
+
+function _onTagLangPanelInput(e) {
+  const panel = e.target.closest('.lang-tab-panel');
+  if (!panel || !panel.dataset.langPanel) return;
+  _markTagLangDirty(panel.dataset.langPanel);
+}
+
+function _markTagLangDirty(code) {
+  _tagDirtyLangs.add(code);
+  const panel = document.querySelector(`#tag-lang-tab-panels .lang-tab-panel[data-lang-panel="${code}"]`);
+  if (panel) panel.querySelectorAll('.lang-dirty-btn').forEach(b => { b.disabled = false; });
+  const tabBtn = document.querySelector(`#tag-lang-tabs-bar .tab-btn[data-lang="${code}"]`);
+  if (tabBtn) tabBtn.classList.add('tab-btn-dirty');
+}
+
+export function saveTagLangDraft(code) {
+  _tagDirtyLangs.delete(code);
+  const panel  = document.querySelector(`#tag-lang-tab-panels .lang-tab-panel[data-lang-panel="${code}"]`);
+  const tabBtn = document.querySelector(`#tag-lang-tabs-bar .tab-btn[data-lang="${code}"]`);
+  if (tabBtn) tabBtn.classList.remove('tab-btn-dirty');
+  if (panel) {
+    const saveBtn = panel.querySelector('.btn-secondary.lang-dirty-btn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '已儲存'; setTimeout(() => { saveBtn.textContent = '儲存草稿'; }, 1500); }
+  }
+}
+
+export function publishTagLang(code) {
+  const lang = (SAMPLE.tagEdit.langStatuses || []).find(l => l.code === code);
+  if (lang) { lang.status = 'synced'; lang.lastSynced = '2026-04-20'; }
+  _tagDirtyLangs.delete(code);
+  renderTagLangTabs();
+  switchTagLangTab(code);
+}
+
+export function retryTagSync(code) { publishTagLang(code); }
+
+export function enableTagLang(code) {
+  const lang = (SAMPLE.tagEdit.langStatuses || []).find(l => l.code === code);
+  if (lang) { delete lang.disabled; lang.status = 'draft'; }
+  _tagCurrentLang = code;
+  renderTagLangTabs();
+}
+
+export function openTagLangDisableModal(code) {
+  _tagPendingDisableLang = code;
+  const lang = (SAMPLE.tagEdit.langStatuses || []).find(l => l.code === code);
+  const nameEl = document.getElementById('tag-disable-lang-name');
+  if (nameEl && lang) nameEl.textContent = lang.name;
+  document.getElementById('tag-lang-disable-modal').style.display = 'flex';
+}
+
+export function confirmTagLangDisable() {
+  const lang = (SAMPLE.tagEdit.langStatuses || []).find(l => l.code === _tagPendingDisableLang);
+  if (lang) { lang.disabled = true; lang.status = 'draft'; lang.lastSynced = null; delete lang.syncError; }
+  document.getElementById('tag-lang-disable-modal').style.display = 'none';
+  _tagPendingDisableLang = null;
+  const firstEnabled = (SAMPLE.tagEdit.langStatuses || []).find(l => !l.disabled);
+  if (firstEnabled) _tagCurrentLang = firstEnabled.code;
+  renderTagLangTabs();
+}
+
+export function toggleTagLangTabMenu(event, code) {
+  event.stopPropagation();
+  const dd = document.getElementById(`tag-lang-tab-menu-${code}`);
+  if (!dd) return;
+  const isOpen = dd.classList.contains('open');
+  document.querySelectorAll('.more-menu-dropdown.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) dd.classList.add('open');
+}
+
+export function closeTagLangTabMenu(code) {
+  const dd = document.getElementById(`tag-lang-tab-menu-${code}`);
+  if (dd) dd.classList.remove('open');
+}
+
+export function openTagLangCopyModal() {
+  const langs = (SAMPLE.tagEdit.langStatuses || []).filter(l => !l.disabled);
+  const sourceEl = document.getElementById('tag-lang-copy-source');
+  const targetEl = document.getElementById('tag-lang-copy-targets');
+  if (!sourceEl || !targetEl) return;
+  sourceEl.innerHTML = langs.map(l => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
+      <input type="radio" name="tag-lang-copy-src" value="${l.code}" ${l.code===_tagCurrentLang?'checked':''}
+        onchange="refreshTagLangCopyTargets()">
+      <span>${l.name}</span>
+    </label>`).join('');
+  refreshTagLangCopyTargets();
+  document.getElementById('tag-lang-copy-modal').style.display = 'flex';
+}
+
+export function refreshTagLangCopyTargets() {
+  const langs   = (SAMPLE.tagEdit.langStatuses || []).filter(l => !l.disabled);
+  const srcCode = (document.querySelector('input[name="tag-lang-copy-src"]:checked') || {}).value;
+  const targetEl = document.getElementById('tag-lang-copy-targets');
+  if (!targetEl) return;
+  targetEl.innerHTML = langs.filter(l => l.code !== srcCode).map(l => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
+      <input type="checkbox" value="${l.code}">
+      <span>${l.name}</span>
+    </label>`).join('');
+}
+
+export function confirmTagLangCopy() {
+  const srcCode = (document.querySelector('input[name="tag-lang-copy-src"]:checked') || {}).value;
+  if (!srcCode) return;
+  const srcContent = (SAMPLE.tagEdit.landings || {})[srcCode] || {};
+  const targets = [...document.querySelectorAll('#tag-lang-copy-targets input[type=checkbox]:checked')]
+    .map(cb => cb.value);
+  targets.forEach(code => {
+    SAMPLE.tagEdit.landings = SAMPLE.tagEdit.landings || {};
+    SAMPLE.tagEdit.landings[code] = { ...srcContent };
+    const lang = (SAMPLE.tagEdit.langStatuses || []).find(l => l.code === code);
+    if (lang) lang.status = 'pending';
+  });
+  document.getElementById('tag-lang-copy-modal').style.display = 'none';
+  renderTagLangTabs();
+  switchTagLangTab(_tagCurrentLang);
+}
+
+Object.assign(window, { removeFilesEditProd, openFilesEditProdModal, closeFilesEditProdModal, confirmFilesEditProd,
+  onFileCatStatusChange, toggleFileCatEnabled,
+  switchFileCatLangTab, openFileCatLangCopyModal, refreshFileCatLangCopyTargets, confirmFileCatLangCopy,
+  switchFilterLangTab, saveFilterLangDraft, publishFilterLang, retryFilterSync,
+  enableFilterLang, openFilterLangDisableModal, confirmFilterLangDisable,
+  toggleFilterLangTabMenu, closeFilterLangTabMenu,
+  openFilterLangCopyModal, refreshFilterLangCopyTargets, confirmFilterLangCopy,
+  switchTagLangTab, saveTagLangDraft, publishTagLang, retryTagSync,
+  enableTagLang, openTagLangDisableModal, confirmTagLangDisable,
+  toggleTagLangTabMenu, closeTagLangTabMenu,
+  openTagLangCopyModal, refreshTagLangCopyTargets, confirmTagLangCopy,
+});

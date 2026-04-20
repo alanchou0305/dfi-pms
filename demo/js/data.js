@@ -421,6 +421,50 @@ export const SAMPLE = {
     featuredProducts: ['EC70A-SU', 'EC551-CR'],
   },
 
+  fileCategoryEdit: {
+    enabled: true,
+    langStatuses: [
+      { code: 'en', name: 'EN' },
+      { code: 'tw', name: 'TW' },
+      { code: 'cn', name: 'CN' },
+      { code: 'jp', name: 'JP' },
+      { code: 'de', name: 'DE' },
+    ],
+    names: {
+      en: 'Datasheet', tw: '資料手冊', cn: '资料手册', jp: 'データシート', de: 'Datenblatt',
+    },
+  },
+
+  filterEdit: {
+    langStatuses: [
+      { code: 'en', name: 'EN', status: 'synced',  lastSynced: '2026-04-10' },
+      { code: 'tw', name: 'TW', status: 'draft',   lastSynced: null },
+      { code: 'cn', name: 'CN', status: 'synced',  lastSynced: '2026-04-08' },
+      { code: 'jp', name: 'JP', status: 'draft',   lastSynced: null },
+      { code: 'de', name: 'DE', status: 'draft',   lastSynced: null, disabled: true },
+    ],
+    names: {
+      en: 'Form Factor', tw: '外形尺寸', cn: '外形尺寸', jp: 'フォームファクター', de: 'Formfaktor',
+    },
+  },
+
+  tagEdit: {
+    langStatuses: [
+      { code: 'en', name: 'EN', status: 'synced',  lastSynced: '2026-04-10' },
+      { code: 'tw', name: 'TW', status: 'needs_update', lastSynced: '2026-04-05' },
+      { code: 'cn', name: 'CN', status: 'synced',  lastSynced: '2026-04-08' },
+      { code: 'jp', name: 'JP', status: 'draft',   lastSynced: null },
+      { code: 'de', name: 'DE', status: 'draft',   lastSynced: null, disabled: true },
+    ],
+    landings: {
+      en: { slug: 'ai-edge', name: 'AI Edge', h1: 'AI Edge Computing', seoTitle: 'AI Edge Computing | DFI', seoDesc: 'Explore DFI AI Edge products designed for intelligent edge computing.' },
+      tw: { slug: 'ai-edge', name: 'AI Edge', h1: 'AI 邊緣運算', seoTitle: 'AI 邊緣運算 | DFI', seoDesc: '探索 DFI 專為智慧邊緣運算設計的 AI Edge 產品系列。' },
+      cn: { slug: 'ai-edge', name: 'AI Edge', h1: 'AI 边缘计算', seoTitle: 'AI 边缘计算 | DFI', seoDesc: '探索 DFI 专为智能边缘计算设计的 AI Edge 产品系列。' },
+      jp: { slug: 'ai-edge', name: 'AI Edge', h1: 'AIエッジコンピューティング', seoTitle: 'AIエッジコンピューティング | DFI', seoDesc: '' },
+      de: { slug: 'ai-edge', name: 'AI Edge', h1: 'AI Edge Computing', seoTitle: 'AI Edge Computing | DFI', seoDesc: '' },
+    },
+  },
+
   files: [
     { name: 'EC70A-SU Datasheet v1.2',            mainCategory: '文件資料', subCategory: 'Datasheet',         type: 'PDF', status: '啟用', updated: '2026-04-01' },
     { name: 'EC551-CR Quick Start Guide',          mainCategory: '文件資料', subCategory: 'Quick Start Guide', type: 'PDF', status: '啟用', updated: '2026-03-15' },
@@ -430,16 +474,16 @@ export const SAMPLE = {
   ],
 
   fileCategories: [
-    { name: '文件資料',         parent: null },
-    { name: 'Datasheet',        parent: '文件資料' },
-    { name: 'Quick Start Guide',parent: '文件資料' },
-    { name: 'User Manual',      parent: '文件資料' },
-    { name: '軟體驅動',         parent: null },
-    { name: 'BIOS / Driver',    parent: '軟體驅動' },
-    { name: 'Firmware',         parent: '軟體驅動' },
-    { name: '行銷素材',         parent: null },
-    { name: 'Brochure',         parent: '行銷素材' },
-    { name: 'Catalog',          parent: '行銷素材' },
+    { name: '文件資料',         parent: null,        enabled: true  },
+    { name: 'Datasheet',        parent: '文件資料',  enabled: true  },
+    { name: 'Quick Start Guide',parent: '文件資料',  enabled: true  },
+    { name: 'User Manual',      parent: '文件資料',  enabled: false },
+    { name: '軟體驅動',         parent: null,        enabled: true  },
+    { name: 'BIOS / Driver',    parent: '軟體驅動',  enabled: true  },
+    { name: 'Firmware',         parent: '軟體驅動',  enabled: true  },
+    { name: '行銷素材',         parent: null,        enabled: true  },
+    { name: 'Brochure',         parent: '行銷素材',  enabled: true  },
+    { name: 'Catalog',          parent: '行銷素材',  enabled: false },
   ],
 
   users: [

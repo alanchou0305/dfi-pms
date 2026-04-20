@@ -6,6 +6,10 @@ import { buildCatTree } from './categories.js';
 let _fileEditSelectedCats = [];
 let _fileEditSelectedProds = [];
 
+// ── Role edit state ─────────────────────────────────────────────
+let _editingRoleName = '';
+window.navigateRolesEdit = (name) => { _editingRoleName = name; window.navigate('roles-edit'); };
+
 export function initFilters() {
   const tree = document.getElementById('filter-list-tree');
   if (!tree) return;
@@ -593,7 +597,10 @@ export function initRoles() {
           onchange="toggleRoleEnabled(${i},this.checked)">
         <span class="status-capsule-pill"></span>
       </label></td>
-      <td>${editDeleteBtns('roles-edit')}</td>
+      <td><div class="col-actions">
+        <button class="btn btn-sm btn-secondary" onclick="navigateRolesEdit('${r.name}')">編輯</button>
+        <button class="btn btn-sm btn-danger">刪除</button>
+      </div></td>
     </tr>`).join('');
 }
 
@@ -602,6 +609,10 @@ export function toggleRoleEnabled(idx, enabled) {
 }
 
 export function initRolesEdit() {
+  const heading = document.getElementById('roles-edit-heading');
+  if (heading) {
+    heading.textContent = _editingRoleName ? `角色編輯：${_editingRoleName}` : '角色權限矩陣';
+  }
   const permMap = {
     '產品管理':    [1,1, 1,1, 1,1, 1,0, 1,0],
     '產品分類':    [1,1, 1,1, 1,0, 1,0, 1,0],

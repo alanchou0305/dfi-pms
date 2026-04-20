@@ -648,7 +648,7 @@ export function closeAddRelationModal() {
 
 // ── Web content lang tabs ─────────────────────────────────────
 
-function _iconRowHtml(title, desc) {
+function _iconRowHtml(title, desc, alt) {
   return `<div class="icon-row">
     <div class="icon-row-drag" title="拖曳排序">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
@@ -658,11 +658,16 @@ function _iconRowHtml(title, desc) {
         <div style="font-size:18px">🔲</div><span style="font-size:10px">上傳</span>
       </div>
     </div>
-    <div class="icon-row-fields">
-      <input class="form-input" type="text" placeholder="Title" value="${(title||'').replace(/"/g,'&quot;')}" style="margin-bottom:6px" />
-      <textarea class="form-input" rows="2" placeholder="Description" style="resize:none">${(desc||'').replace(/</g,'&lt;')}</textarea>
+    <div class="icon-row-cell">
+      <input class="form-input" type="text" placeholder="Alt Text" value="${(alt||'').replace(/"/g,'&quot;')}" />
     </div>
-    <button class="btn-icon" onclick="this.closest('.icon-row').remove()" title="刪除">
+    <div class="icon-row-cell">
+      <input class="form-input" type="text" placeholder="Title" value="${(title||'').replace(/"/g,'&quot;')}" />
+    </div>
+    <div class="icon-row-cell">
+      <textarea class="form-input" rows="3" placeholder="Description" style="resize:none">${(desc||'').replace(/</g,'&lt;')}</textarea>
+    </div>
+    <button class="btn-icon" onclick="this.closest('.icon-row').remove()" title="刪除" style="margin-top:4px">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
     </button>
   </div>`;
@@ -733,9 +738,9 @@ export function renderWebContentTabs() {
     const syncExtra     = isFailed ? `（${l.syncError || '發佈失敗'}）` : '';
 
     const iconRowsHtml = (l.code === 'en') ? [
-      { title: 'High Performance', desc: 'Powered by latest Intel processors' },
-      { title: 'Wide Temperature', desc: '-20°C ~ 60°C operation range' },
-    ].map(r => _iconRowHtml(r.title, r.desc)).join('') : '';
+      { title: 'High Performance', desc: 'Powered by latest Intel processors', alt: 'High performance icon' },
+      { title: 'Wide Temperature', desc: '-20°C ~ 60°C operation range', alt: 'Wide temperature icon' },
+    ].map(r => _iconRowHtml(r.title, r.desc, r.alt)).join('') : '';
 
     const featuresEsc = (content.features || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
@@ -753,7 +758,6 @@ export function renderWebContentTabs() {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
             </button>
             <div class="more-menu-dropdown" id="lang-tab-menu-${l.code}">
-              <button class="more-menu-item" onclick="openLangCopyToModal('${l.code}');closeLangTabMenu('${l.code}')">複製到此語系</button>
               <button class="more-menu-item danger" onclick="openLangDisableModal('${l.code}');closeLangTabMenu('${l.code}')">停用此語系</button>
             </div>
           </div>
@@ -778,7 +782,7 @@ export function renderWebContentTabs() {
             </button>
           </div>
           <div class="icon-table">
-            <div class="icon-table-head"><div></div><div>ICON 圖片</div><div>Title</div><div>Description</div><div></div></div>
+            <div class="icon-table-head"><div></div><div>ICON 圖片</div><div>Alt Text</div><div>Title</div><div>Description</div><div></div></div>
             <div class="icon-rows">${iconRowsHtml}</div>
           </div>
         </div>
@@ -972,7 +976,7 @@ export function addIconRow(triggerBtn) {
   const panel = triggerBtn ? triggerBtn.closest('.lang-tab-panel') : null;
   const container = panel ? panel.querySelector('.icon-rows') : document.querySelector('.lang-tab-panel.active .icon-rows');
   if (!container) return;
-  container.insertAdjacentHTML('beforeend', _iconRowHtml('', ''));
+  container.insertAdjacentHTML('beforeend', _iconRowHtml('', '', ''));
 }
 
 // ── Classification zones ──────────────────────────────────────

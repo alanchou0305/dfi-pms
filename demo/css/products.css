@@ -1007,7 +1007,7 @@ tr.drag-over td { background: #F0F7FF; }
 .icon-table { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 .icon-table-head {
   display: grid;
-  grid-template-columns: 32px 96px 1fr 1fr 36px;
+  grid-template-columns: 32px 96px 1fr 1fr 1fr 36px;
   gap: 12px;
   align-items: center;
   padding: 8px 12px;
@@ -1021,16 +1021,16 @@ tr.drag-over td { background: #F0F7FF; }
 }
 .icon-row {
   display: grid;
-  grid-template-columns: 32px 96px 1fr 36px;
+  grid-template-columns: 32px 96px 1fr 1fr 1fr 36px;
   gap: 12px;
-  align-items: center;
+  align-items: start;
   padding: 12px;
   border-bottom: 1px solid var(--border);
 }
 .icon-row:last-child { border-bottom: none; }
-.icon-row-drag { color: var(--text-3); cursor: grab; display: flex; align-items: center; justify-content: center; }
-.icon-row-img { display: flex; align-items: center; }
-.icon-row-fields { display: flex; flex-direction: column; }
+.icon-row-drag { color: var(--text-3); cursor: grab; display: flex; align-items: center; justify-content: center; padding-top: 8px; }
+.icon-row-img { display: flex; flex-direction: column; gap: 6px; }
+.icon-row-cell { display: flex; flex-direction: column; gap: 4px; }
 
 /* ── Inline lang tabs: tab bar extras ─────────────────────── */
 

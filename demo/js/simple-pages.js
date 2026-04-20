@@ -7,36 +7,95 @@ let _fileEditSelectedCats = [];
 let _fileEditSelectedProds = [];
 
 export function initFilters() {
-  const tbody = document.querySelector('#view-filters .table-wrap tbody');
-  const info  = document.querySelector('#view-filters .pagination-info');
-  if (!tbody) return;
-  tbody.innerHTML = SAMPLE.filters.map(f => `
-    <tr>
-      <td><strong>${f.name}</strong></td>
-      <td>${f.options.length}</td>
-      <td><div class="lang-dots">${langDotsHtml(f.langs)}</div></td>
-      <td>${f.sort}</td>
-      <td>${statusBadge(f.status === 'active')}</td>
-      <td>${editDeleteBtns('filters-edit')}</td>
-    </tr>`).join('');
-  if (info) info.textContent = `共 ${SAMPLE.filters.length} 筆`;
+  const tree = document.getElementById('filter-list-tree');
+  if (!tree) return;
+
+  if (!SAMPLE.filters.length) {
+    tree.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-3)">尚無篩選器資料</div>`;
+    return;
+  }
+
+  tree.innerHTML = SAMPLE.filters.map(f => {
+    const enabled = f.status === 'active';
+    const safeName = f.name.replace(/'/g, "\\'");
+    return `
+      <div class="cat-node cat-parent" draggable="true" data-name="${f.name.replace(/"/g, '&quot;')}">
+        <div class="cat-node-row">
+          <span class="drag-handle" title="拖曳排序">⋮⋮</span>
+          <span class="cat-name${enabled ? '' : ' cat-name-off'}">${f.name}</span>
+          <span style="font-size:11px;color:var(--text-3);flex-shrink:0;background:var(--hover-bg);padding:2px 7px;border-radius:10px;border:1px solid var(--border)">${f.options.length} 個選項</span>
+          <label class="status-capsule" onclick="event.stopPropagation()">
+            <input type="checkbox" ${enabled ? 'checked' : ''}
+              onchange="toggleFilterEnabled('${safeName}', this.checked)">
+            <span class="status-capsule-pill"></span>
+          </label>
+          <div class="cat-actions">${editDeleteBtns('filters-edit')}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  setupFilterListDnD(tree);
+}
+
+export function toggleFilterEnabled(name, enabled) {
+  const f = SAMPLE.filters.find(f => f.name === name);
+  if (f) f.status = enabled ? 'active' : 'inactive';
+  const nameEl = document.querySelector(`#filter-list-tree .cat-node[data-name="${name}"] .cat-name`);
+  if (nameEl) nameEl.classList.toggle('cat-name-off', !enabled);
+}
+
+function setupFilterListDnD(treeEl) {
+  if (treeEl.dataset.dndAttached) return;
+  treeEl.dataset.dndAttached = '1';
+  let dragSrc = null;
+
+  treeEl.addEventListener('dragstart', e => {
+    const node = e.target.closest('.cat-node');
+    if (!node) return;
+    dragSrc = node;
+    node.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  treeEl.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (!dragSrc) return;
+    const target = e.target.closest('.cat-node');
+    if (!target || target === dragSrc) return;
+    treeEl.querySelectorAll('.cat-node.drag-over').forEach(n => n.classList.remove('drag-over'));
+    target.classList.add('drag-over');
+  });
+
+  treeEl.addEventListener('dragleave', e => {
+    if (!treeEl.contains(e.relatedTarget)) {
+      treeEl.querySelectorAll('.drag-over').forEach(n => n.classList.remove('drag-over'));
+    }
+  });
+
+  treeEl.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!dragSrc) return;
+    const target = e.target.closest('.cat-node');
+    if (!target || target === dragSrc) return;
+    const si = SAMPLE.filters.findIndex(f => f.name === dragSrc.dataset.name);
+    const di = SAMPLE.filters.findIndex(f => f.name === target.dataset.name);
+    if (si < 0 || di < 0) { dragSrc = null; return; }
+    const [moved] = SAMPLE.filters.splice(si, 1);
+    SAMPLE.filters.splice(di, 0, moved);
+    SAMPLE.filters.forEach((f, idx) => { f.sort = idx + 1; });
+    dragSrc = null;
+    initFilters();
+  });
+
+  treeEl.addEventListener('dragend', () => {
+    treeEl.querySelectorAll('.dragging, .drag-over').forEach(n => n.classList.remove('dragging', 'drag-over'));
+    dragSrc = null;
+  });
 }
 
 export function initFiltersEdit() {
   _filterCurrentLang = 'en';
-  _filterDirtyLangs  = new Set();
   renderFilterLangTabs();
-
-  const f = SAMPLE.filters[0];
-  const optBody = document.querySelector('#view-filters-edit .form-section:last-child .form-section-body');
-  if (optBody) {
-    optBody.innerHTML = f.options.map((opt, i) => `
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
-        <span style="color:var(--text-3);font-size:12px;width:20px;flex-shrink:0">${i + 1}</span>
-        <input class="form-input" type="text" value="${opt}" style="flex:1" />
-        <button class="btn btn-sm btn-danger">刪除</button>
-      </div>`).join('');
-  }
 }
 
 export function initTags() {
@@ -797,33 +856,22 @@ export function confirmFileCatLangCopy() {
 }
 
 // ── Filter language tab state ─────────────────────────────────
-let _filterCurrentLang        = 'en';
-let _filterDirtyLangs         = new Set();
-let _filterPendingDisableLang = null;
+let _filterCurrentLang = 'en';
 
 export function renderFilterLangTabs() {
   const langs = SAMPLE.filterEdit.langStatuses || [];
 
-  const firstEnabled = langs.find(l => !l.disabled);
-  if (firstEnabled && !langs.find(l => l.code === _filterCurrentLang && !l.disabled)) {
-    _filterCurrentLang = firstEnabled.code;
+  if (!langs.find(l => l.code === _filterCurrentLang)) {
+    _filterCurrentLang = langs[0]?.code || 'en';
   }
 
   const tabsBar = document.getElementById('filter-lang-tabs-bar');
   if (tabsBar) {
-    const btnHtml = langs.map(l => {
-      const isActive = l.code === _filterCurrentLang && !l.disabled;
-      const isOff    = l.disabled === true;
-      const isDirty  = _filterDirtyLangs.has(l.code);
-      const dotClass = isOff                  ? 'dot-disabled' :
-        l.status === 'synced'                 ? 'dot-synced'   :
-        l.status === 'sync_failed'            ? 'dot-error'    :
-        l.status === 'pending'                ? 'dot-pending'  : 'dot-draft';
-      return `<button class="tab-btn${isActive?' active':''}${isOff?' tab-btn-lang-off':''}${isDirty?' tab-btn-dirty':''}"
-        data-lang="${l.code}" onclick="switchFilterLangTab('${l.code}')"
-        ${isOff?'title="此語系已停用"':''}>${l.name}<span class="lang-tab-dot ${dotClass}"></span></button>`;
-    }).join('');
-    tabsBar.innerHTML = btnHtml +
+    tabsBar.innerHTML = langs.map(l => {
+      const isActive = l.code === _filterCurrentLang;
+      return `<button class="tab-btn${isActive ? ' active' : ''}"
+        data-lang="${l.code}" onclick="switchFilterLangTab('${l.code}')">${l.name}</button>`;
+    }).join('') +
       `<button class="btn btn-sm btn-secondary lang-tabs-copy-btn" onclick="openFilterLangCopyModal()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         複製語系內容</button>`;
@@ -833,69 +881,37 @@ export function renderFilterLangTabs() {
   if (!panelsEl) return;
 
   panelsEl.innerHTML = langs.map(l => {
-    const isActive = l.code === _filterCurrentLang && !l.disabled;
-    const isOff    = l.disabled === true;
+    const isActive = l.code === _filterCurrentLang;
+    const name = (SAMPLE.filterEdit.names || {})[l.code] || '';
+    const opts = (SAMPLE.filterEdit.options || {})[l.code] || [];
 
-    if (isOff) {
-      return `<div class="tab-panel lang-tab-panel${isActive?' active':''}" data-lang-panel="${l.code}">
-        <div class="lang-tab-disabled-state">
-          <svg class="lang-tab-disabled-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-          <div class="lang-tab-disabled-title">${l.name} 語系已停用</div>
-          <div class="lang-tab-disabled-desc">停用後此語系頁面不對外顯示。啟用後即可開始編輯內容。</div>
-          <button class="btn btn-primary" onclick="enableFilterLang('${l.code}')">啟用語系</button>
-        </div>
-      </div>`;
-    }
+    const optsHtml = opts.length === 0
+      ? `<div class="empty-state" style="padding:24px 0"><div class="empty-state-text">尚無篩選選項</div></div>`
+      : opts.map((opt, i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-3);font-size:12px;width:20px;flex-shrink:0">${i + 1}</span>
+          <input class="form-input" type="text" value="${opt.replace(/"/g, '&quot;')}" style="flex:1"
+            oninput="updateFilterOption('${l.code}',${i},this.value)" />
+          <button class="btn btn-sm btn-danger" onclick="removeFilterOption('${l.code}',${i})">刪除</button>
+        </div>`).join('');
 
-    const name     = (SAMPLE.filterEdit.names || {})[l.code] || '';
-    const isDirty  = _filterDirtyLangs.has(l.code);
-    const isFailed = l.status === 'sync_failed';
-
-    const saveBtn = `<button class="btn btn-sm btn-secondary lang-dirty-btn"
-      onclick="saveFilterLangDraft('${l.code}')"${isDirty?'':' disabled'}>儲存草稿</button>`;
-    const publishDisabled = !isFailed && l.status === 'synced' && !isDirty;
-    const publishBtn = isFailed
-      ? `<button class="btn btn-sm btn-primary" style="background:#DC2626;border-color:#DC2626"
-          onclick="retryFilterSync('${l.code}')">重試發佈</button>`
-      : `<button class="btn btn-sm btn-primary lang-dirty-btn"
-          onclick="publishFilterLang('${l.code}')"${publishDisabled?' disabled':''}>發佈</button>`;
-
-    const syncDateTxt   = l.lastSynced ? '最後發佈：' + l.lastSynced : '尚未發佈';
-    const syncDateStyle = isFailed ? ' style="color:#DC2626"' : '';
-    const syncExtra     = isFailed ? `（${l.syncError || '發佈失敗'}）` : '';
-
-    return `<div class="tab-panel lang-tab-panel${isActive?' active':''}" data-lang-panel="${l.code}">
-      <div class="lang-tab-hd">
-        <div class="lang-tab-hd-left">
-          ${langPublishBadge(l)}
-          <span class="lang-tab-sync-date"${syncDateStyle}>${syncDateTxt}${syncExtra}</span>
-        </div>
-        <div class="lang-tab-hd-right">
-          ${saveBtn}
-          ${publishBtn}
-          <div class="more-menu">
-            <button class="btn-icon" onclick="toggleFilterLangTabMenu(event,'${l.code}')" title="更多">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-            </button>
-            <div class="more-menu-dropdown" id="filter-lang-tab-menu-${l.code}">
-              <button class="more-menu-item danger" onclick="openFilterLangDisableModal('${l.code}');closeFilterLangTabMenu('${l.code}')">停用此語系</button>
-            </div>
+    return `<div class="tab-panel lang-tab-panel${isActive ? ' active' : ''}" data-lang-panel="${l.code}">
+      <div class="lang-edit-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">篩選器名稱</label>
+            <input class="form-input" type="text" value="${name.replace(/"/g, '&quot;')}" />
           </div>
         </div>
-      </div>
-      <div class="lang-edit-body">
-        <div class="form-group">
-          <label class="form-label">篩選器名稱</label>
-          <input class="form-input" type="text" value="${name.replace(/"/g,'&quot;')}" />
+        <div class="divider"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <label class="form-label" style="margin:0">篩選選項</label>
+          <button class="btn btn-sm btn-primary" onclick="addFilterOption('${l.code}')">+ 新增選項</button>
         </div>
+        <div id="filter-opts-${l.code}">${optsHtml}</div>
       </div>
     </div>`;
   }).join('');
-
-  if (!panelsEl._filterDirtyListenerAttached) {
-    panelsEl.addEventListener('input', _onFilterLangPanelInput);
-    panelsEl._filterDirtyListenerAttached = true;
-  }
 }
 
 export function switchFilterLangTab(code) {
@@ -908,88 +924,39 @@ export function switchFilterLangTab(code) {
   if (panel) panel.classList.add('active');
 }
 
-function _onFilterLangPanelInput(e) {
-  const panel = e.target.closest('.lang-tab-panel');
-  if (!panel || !panel.dataset.langPanel) return;
-  _markFilterLangDirty(panel.dataset.langPanel);
-}
-
-function _markFilterLangDirty(code) {
-  _filterDirtyLangs.add(code);
-  const panel = document.querySelector(`#filter-lang-tab-panels .lang-tab-panel[data-lang-panel="${code}"]`);
-  if (panel) panel.querySelectorAll('.lang-dirty-btn').forEach(b => { b.disabled = false; });
-  const tabBtn = document.querySelector(`#filter-lang-tabs-bar .tab-btn[data-lang="${code}"]`);
-  if (tabBtn) tabBtn.classList.add('tab-btn-dirty');
-}
-
-export function saveFilterLangDraft(code) {
-  _filterDirtyLangs.delete(code);
-  const panel  = document.querySelector(`#filter-lang-tab-panels .lang-tab-panel[data-lang-panel="${code}"]`);
-  const tabBtn = document.querySelector(`#filter-lang-tabs-bar .tab-btn[data-lang="${code}"]`);
-  if (tabBtn) tabBtn.classList.remove('tab-btn-dirty');
-  if (panel) {
-    const saveBtn = panel.querySelector('.btn-secondary.lang-dirty-btn');
-    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '已儲存'; setTimeout(() => { saveBtn.textContent = '儲存草稿'; }, 1500); }
+export function addFilterOption(langCode) {
+  SAMPLE.filterEdit.options = SAMPLE.filterEdit.options || {};
+  SAMPLE.filterEdit.options[langCode] = SAMPLE.filterEdit.options[langCode] || [];
+  SAMPLE.filterEdit.options[langCode].push('');
+  renderFilterLangTabs();
+  switchFilterLangTab(langCode);
+  const container = document.getElementById(`filter-opts-${langCode}`);
+  if (container) {
+    const inputs = container.querySelectorAll('input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
   }
 }
 
-export function publishFilterLang(code) {
-  const lang = (SAMPLE.filterEdit.langStatuses || []).find(l => l.code === code);
-  if (lang) { lang.status = 'synced'; lang.lastSynced = '2026-04-20'; }
-  _filterDirtyLangs.delete(code);
+export function removeFilterOption(langCode, idx) {
+  const opts = (SAMPLE.filterEdit.options || {})[langCode];
+  if (opts) opts.splice(idx, 1);
   renderFilterLangTabs();
-  switchFilterLangTab(code);
+  switchFilterLangTab(langCode);
 }
 
-export function retryFilterSync(code) { publishFilterLang(code); }
-
-export function enableFilterLang(code) {
-  const lang = (SAMPLE.filterEdit.langStatuses || []).find(l => l.code === code);
-  if (lang) { delete lang.disabled; lang.status = 'draft'; }
-  _filterCurrentLang = code;
-  renderFilterLangTabs();
-}
-
-export function openFilterLangDisableModal(code) {
-  _filterPendingDisableLang = code;
-  const lang = (SAMPLE.filterEdit.langStatuses || []).find(l => l.code === code);
-  const nameEl = document.getElementById('filter-disable-lang-name');
-  if (nameEl && lang) nameEl.textContent = lang.name;
-  document.getElementById('filter-lang-disable-modal').style.display = 'flex';
-}
-
-export function confirmFilterLangDisable() {
-  const lang = (SAMPLE.filterEdit.langStatuses || []).find(l => l.code === _filterPendingDisableLang);
-  if (lang) { lang.disabled = true; lang.status = 'draft'; lang.lastSynced = null; delete lang.syncError; }
-  document.getElementById('filter-lang-disable-modal').style.display = 'none';
-  _filterPendingDisableLang = null;
-  const firstEnabled = (SAMPLE.filterEdit.langStatuses || []).find(l => !l.disabled);
-  if (firstEnabled) _filterCurrentLang = firstEnabled.code;
-  renderFilterLangTabs();
-}
-
-export function toggleFilterLangTabMenu(event, code) {
-  event.stopPropagation();
-  const dd = document.getElementById(`filter-lang-tab-menu-${code}`);
-  if (!dd) return;
-  const isOpen = dd.classList.contains('open');
-  document.querySelectorAll('.more-menu-dropdown.open').forEach(el => el.classList.remove('open'));
-  if (!isOpen) dd.classList.add('open');
-}
-
-export function closeFilterLangTabMenu(code) {
-  const dd = document.getElementById(`filter-lang-tab-menu-${code}`);
-  if (dd) dd.classList.remove('open');
+export function updateFilterOption(langCode, idx, value) {
+  const opts = (SAMPLE.filterEdit.options || {})[langCode];
+  if (opts) opts[idx] = value;
 }
 
 export function openFilterLangCopyModal() {
-  const langs = (SAMPLE.filterEdit.langStatuses || []).filter(l => !l.disabled);
+  const langs = SAMPLE.filterEdit.langStatuses || [];
   const sourceEl = document.getElementById('filter-lang-copy-source');
   const targetEl = document.getElementById('filter-lang-copy-targets');
   if (!sourceEl || !targetEl) return;
   sourceEl.innerHTML = langs.map(l => `
     <label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer">
-      <input type="radio" name="filter-lang-copy-src" value="${l.code}" ${l.code===_filterCurrentLang?'checked':''}
+      <input type="radio" name="filter-lang-copy-src" value="${l.code}" ${l.code === _filterCurrentLang ? 'checked' : ''}
         onchange="refreshFilterLangCopyTargets()">
       <span>${l.name}</span>
     </label>`).join('');
@@ -998,7 +965,7 @@ export function openFilterLangCopyModal() {
 }
 
 export function refreshFilterLangCopyTargets() {
-  const langs   = (SAMPLE.filterEdit.langStatuses || []).filter(l => !l.disabled);
+  const langs = SAMPLE.filterEdit.langStatuses || [];
   const srcCode = (document.querySelector('input[name="filter-lang-copy-src"]:checked') || {}).value;
   const targetEl = document.getElementById('filter-lang-copy-targets');
   if (!targetEl) return;
@@ -1013,13 +980,14 @@ export function confirmFilterLangCopy() {
   const srcCode = (document.querySelector('input[name="filter-lang-copy-src"]:checked') || {}).value;
   if (!srcCode) return;
   const srcName = (SAMPLE.filterEdit.names || {})[srcCode] || '';
+  const srcOpts = [...((SAMPLE.filterEdit.options || {})[srcCode] || [])];
   const targets = [...document.querySelectorAll('#filter-lang-copy-targets input[type=checkbox]:checked')]
     .map(cb => cb.value);
   targets.forEach(code => {
     SAMPLE.filterEdit.names = SAMPLE.filterEdit.names || {};
     SAMPLE.filterEdit.names[code] = srcName;
-    const lang = (SAMPLE.filterEdit.langStatuses || []).find(l => l.code === code);
-    if (lang) lang.status = 'pending';
+    SAMPLE.filterEdit.options = SAMPLE.filterEdit.options || {};
+    SAMPLE.filterEdit.options[code] = [...srcOpts];
   });
   document.getElementById('filter-lang-copy-modal').style.display = 'none';
   renderFilterLangTabs();
@@ -1282,9 +1250,8 @@ export function confirmTagLangCopy() {
 Object.assign(window, { removeFilesEditProd, openFilesEditProdModal, closeFilesEditProdModal, confirmFilesEditProd,
   onFileCatStatusChange, toggleFileCatEnabled,
   switchFileCatLangTab, openFileCatLangCopyModal, refreshFileCatLangCopyTargets, confirmFileCatLangCopy,
-  switchFilterLangTab, saveFilterLangDraft, publishFilterLang, retryFilterSync,
-  enableFilterLang, openFilterLangDisableModal, confirmFilterLangDisable,
-  toggleFilterLangTabMenu, closeFilterLangTabMenu,
+  toggleFilterEnabled,
+  switchFilterLangTab, addFilterOption, removeFilterOption, updateFilterOption,
   openFilterLangCopyModal, refreshFilterLangCopyTargets, confirmFilterLangCopy,
   switchTagLangTab, saveTagLangDraft, publishTagLang, retryTagSync,
   enableTagLang, openTagLangDisableModal, confirmTagLangDisable,

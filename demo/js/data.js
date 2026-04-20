@@ -437,14 +437,21 @@ export const SAMPLE = {
 
   filterEdit: {
     langStatuses: [
-      { code: 'en', name: 'EN', status: 'synced',  lastSynced: '2026-04-10' },
-      { code: 'tw', name: 'TW', status: 'draft',   lastSynced: null },
-      { code: 'cn', name: 'CN', status: 'synced',  lastSynced: '2026-04-08' },
-      { code: 'jp', name: 'JP', status: 'draft',   lastSynced: null },
-      { code: 'de', name: 'DE', status: 'draft',   lastSynced: null, disabled: true },
+      { code: 'en', name: 'EN' },
+      { code: 'tw', name: 'TW' },
+      { code: 'cn', name: 'CN' },
+      { code: 'jp', name: 'JP' },
+      { code: 'de', name: 'DE' },
     ],
     names: {
       en: 'Form Factor', tw: '外形尺寸', cn: '外形尺寸', jp: 'フォームファクター', de: 'Formfaktor',
+    },
+    options: {
+      en: ['1.8" SBC', '2.5" Pico-ITX', '3.5" SBC', '4" SBC', 'Mini-ITX', 'microATX', 'ATX', 'EATX', 'PICMG 1.3'],
+      tw: ['1.8" SBC', '2.5" Pico-ITX', '3.5" SBC', '4" SBC', 'Mini-ITX', 'microATX', 'ATX', 'EATX', 'PICMG 1.3'],
+      cn: ['1.8" SBC', '2.5" Pico-ITX', '3.5" SBC', '4" SBC', 'Mini-ITX', 'microATX', 'ATX', 'EATX', 'PICMG 1.3'],
+      jp: ['1.8" SBC', '2.5" Pico-ITX', '3.5" SBC', '4" SBC', 'Mini-ITX', 'microATX', 'ATX', 'EATX', 'PICMG 1.3'],
+      de: ['1.8" SBC', '2.5" Pico-ITX', '3.5" SBC', '4" SBC', 'Mini-ITX', 'microATX', 'ATX', 'EATX', 'PICMG 1.3'],
     },
   },
 

@@ -574,8 +574,8 @@ export function initUsersEdit() {
     const sel  = grp.querySelector('select');
     if (text === '姓名 *'           && inp) inp.value = u.name;
     if (text === 'Microsoft 信箱 *' && inp) inp.value = u.email;
-    if (text === '公司'             && inp) inp.value = u.company;
-    if (text === '部門'             && inp) inp.value = u.dept;
+    if (text === '公司'             && sel) sel.value = u.company;
+    if (text === '部門'             && sel) sel.value = u.dept;
     if (text === '角色 *'           && sel) sel.value = u.role;
     if (text === '狀態'             && sel) sel.value = '啟用';
   });

@@ -20,7 +20,9 @@ export function buildCatTree(cats) {
 export function renderCatTree(tree) {
   const container = document.getElementById('cat-tree');
   if (!container) return;
-  container.innerHTML = tree.map(parent => `
+  container.innerHTML = tree.map(parent => {
+    const pNameAttr = parent.name.replace(/"/g, '&quot;');
+    return `
     <div class="cat-node cat-parent" draggable="true" data-name="${parent.name}">
       <div class="cat-node-row">
         <span class="drag-handle" title="拖曳排序">⋮⋮</span>
@@ -28,10 +30,17 @@ export function renderCatTree(tree) {
         ${ICON_FOLDER}
         <span class="cat-name">${parent.name}</span>
         <div class="lang-dots">${langDotsHtml(parent.langs)}</div>
-        <div class="cat-actions">${editDeleteBtns('categories-edit')}</div>
+        <div class="cat-actions"><div class="col-actions">
+          <button class="btn btn-sm btn-secondary"
+            data-edit-name="${pNameAttr}" data-edit-type="main" data-edit-parent=""
+            onclick="navigateCategoriesEditFromBtn(this)">編輯</button>
+          <button class="btn btn-sm btn-danger">刪除</button>
+        </div></div>
       </div>
       <div class="cat-children">
-        ${parent.children.map(child => `
+        ${parent.children.map(child => {
+          const cNameAttr = child.name.replace(/"/g, '&quot;');
+          return `
           <div class="cat-node cat-child" draggable="true" data-name="${child.name}" data-parent="${parent.name}">
             <div class="cat-node-row">
               <span class="drag-handle" title="拖曳排序">⋮⋮</span>
@@ -39,12 +48,18 @@ export function renderCatTree(tree) {
               ${ICON_FILE}
               <span class="cat-name">${child.name}</span>
               <div class="lang-dots">${langDotsHtml(child.langs)}</div>
-              <div class="cat-actions">${editDeleteBtns('categories-edit')}</div>
+              <div class="cat-actions"><div class="col-actions">
+                <button class="btn btn-sm btn-secondary"
+                  data-edit-name="${cNameAttr}" data-edit-type="sub" data-edit-parent="${pNameAttr}"
+                  onclick="navigateCategoriesEditFromBtn(this)">編輯</button>
+                <button class="btn btn-sm btn-danger">刪除</button>
+              </div></div>
             </div>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
   setupCatToggle();
   setupCatDnD();
 }
@@ -161,8 +176,25 @@ export function initCategories() {
   });
 }
 
+export function navigateCategoriesEdit(name, type, parentName) {
+  SAMPLE.categoryEdit.type = type;
+  SAMPLE.categoryEdit.parentId = parentName || null;
+  SAMPLE.categoryEdit.editingName = name;
+  window.navigate('categories-edit');
+}
+
+export function navigateCategoriesEditFromBtn(btn) {
+  navigateCategoriesEdit(btn.dataset.editName, btn.dataset.editType, btn.dataset.editParent);
+}
+
 export function initCategoriesEdit() {
   const ce = SAMPLE.categoryEdit;
+
+  const heading = document.getElementById('cat-edit-heading');
+  if (heading) {
+    const name = ce.editingName || ce.landings?.en?.name || '';
+    heading.textContent = name ? `分類編輯：${name}` : '分類編輯';
+  }
 
   setCatType(ce.type || 'main');
   const typeDisplay = document.getElementById('cat-type-display');
@@ -523,7 +555,7 @@ export function toggleCatFeatured(model, checked) {
 }
 
 Object.assign(window, {
-  setCatType,
+  setCatType, navigateCategoriesEdit, navigateCategoriesEditFromBtn,
   switchCatLangTab, saveCatLangDraft, publishCatLang, retryCatSync,
   enableCatLang, openCatLangDisableModal, confirmCatLangDisable,
   toggleCatLangTabMenu, closeCatLangTabMenu,

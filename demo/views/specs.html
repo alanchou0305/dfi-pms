@@ -13,70 +13,75 @@
     <div class="toolbar">
       <div class="search-input">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="搜尋規格群組..." />
+        <input type="text" placeholder="搜尋規格群組或欄位..." id="spec-list-search" />
       </div>
-      <select class="filter-select"><option>全部分類</option></select>
+      <select class="filter-select" id="spec-list-cat-filter"><option value="">全部分類</option></select>
     </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th style="width:32px"></th>
-            <th>規格群組</th>
-            <th>規格數</th>
-            <th>大分類</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">📐</div><div class="empty-state-text">尚無產品規格資料</div></div></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="pagination">
-      <span class="pagination-info">共 0 筆</span>
-      <div class="pagination-pages"><div class="page-btn">‹</div><div class="page-btn active">1</div><div class="page-btn">›</div></div>
-    </div>
+    <div class="cat-tree" id="spec-tree"></div>
   </div>
 </div>
 
-<!-- 2.5.1 產品規格群組編輯 -->
+<!-- 2.5.1 規格群組編輯 -->
 <div id="view-specs-edit" class="view">
   <div class="form-header">
     <button class="back-btn" onclick="navigate('specs')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
-    <h2>產品規格編輯</h2>
+    <h2>規格群組編輯</h2>
     <div class="form-actions">
       <button class="btn btn-secondary" onclick="navigate('specs')">取消</button>
       <button class="btn btn-primary">儲存</button>
     </div>
   </div>
+
+  <!-- Section 1: 基本資訊 -->
   <div class="form-section">
-    <div class="form-section-header">規格群組基本資訊</div>
+    <div class="form-section-header">基本資訊 <span class="form-label-hint" style="font-size:12px;margin-left:6px;text-transform:none;letter-spacing:0">Basic Info</span></div>
     <div class="form-section-body">
       <div class="form-grid">
         <div class="form-group">
-          <label class="form-label">規格群組名稱（識別用）</label>
-          <input class="form-input" type="text" placeholder="" />
+          <label class="form-label">群組識別名稱 <span class="form-label-hint">Internal Key</span></label>
+          <input class="form-input" type="text" id="spec-edit-key" placeholder="例：general" />
+          <div style="font-size:12px;color:var(--text-3);margin-top:4px">後台識別用，不對外顯示</div>
         </div>
         <div class="form-group">
-          <label class="form-label">綁定大分類</label>
-          <select class="form-input"><option value="">請選擇</option></select>
+          <label class="form-label">狀態 <span class="form-label-hint">Status</span></label>
+          <div style="padding-top:4px">
+            <label class="status-capsule">
+              <input type="checkbox" id="spec-edit-status" checked />
+              <span class="status-capsule-pill"></span>
+            </label>
+          </div>
         </div>
+      </div>
+      <div class="form-group form-full" style="margin-top:4px">
+        <label class="form-label">套用分類 <span class="form-label-hint">Applied Categories</span></label>
+        <div style="font-size:12px;color:var(--text-3);margin:4px 0 10px">選擇後，產品歸屬該分類時將自動帶出此規格群組</div>
+        <div id="spec-edit-categories"></div>
       </div>
     </div>
   </div>
+
+  <!-- Section 2: 規格欄位 -->
   <div class="form-section">
-    <div class="form-section-header">語系管理</div>
+    <div class="form-section-header">規格欄位 <span class="form-label-hint" style="font-size:12px;margin-left:6px;text-transform:none;letter-spacing:0">Spec Fields</span></div>
+    <div class="form-section-body">
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:16px">管理欄位識別名稱與排序，各語系的顯示名稱至下方「語系管理」設定。</div>
+      <div id="spec-edit-fields-list"></div>
+      <button class="btn btn-sm btn-secondary" onclick="addSpecField()" style="margin-top:12px">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增欄位
+      </button>
+    </div>
+  </div>
+
+  <!-- Section 3: 語系管理 -->
+  <div class="form-section">
+    <div class="form-section-header">語系管理 <span class="form-label-hint" style="font-size:12px;margin-left:6px;text-transform:none;letter-spacing:0">Language Management</span></div>
     <div class="form-section-body" style="padding:0">
       <div class="tabs-card" style="border:none;box-shadow:none;margin:0">
-        <div class="tabs-bar" id="spec-lang-tabs-bar">
-          <!-- rendered by renderSpecLangTabs() -->
-        </div>
-        <div id="spec-lang-tab-panels">
-          <!-- rendered by renderSpecLangTabs() -->
-        </div>
+        <div class="tabs-bar" id="spec-lang-tabs-bar"></div>
+        <div id="spec-lang-tab-panels"></div>
       </div>
     </div>
   </div>
@@ -99,7 +104,7 @@
         <div id="spec-lang-copy-targets"></div>
       </div>
       <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:10px 12px;font-size:12px;color:#92400E">
-        此操作將覆蓋目標語系現有的草稿內容，複製後狀態將自動標記為「待同步」。
+        此操作將覆蓋目標語系現有的草稿內容，群組顯示名稱與所有欄位名稱將一併複製。
       </div>
     </div>
     <div class="modal-footer">

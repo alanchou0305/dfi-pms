@@ -165,15 +165,18 @@ export function initCategoriesEdit() {
   const ce = SAMPLE.categoryEdit;
 
   setCatType(ce.type || 'main');
+  const typeDisplay = document.getElementById('cat-type-display');
+  if (typeDisplay) {
+    typeDisplay.textContent = (ce.type || 'main') === 'sub'
+      ? '次分類 / Sub-category'
+      : '大分類 / Main Category';
+  }
 
   const parentSel = document.getElementById('cat-parent-select');
   if (parentSel) {
     parentSel.innerHTML = '<option value="">— 請選擇 —</option>' +
       SAMPLE.mainCategories.map(c => `<option${c === ce.parentId ? ' selected' : ''}>${c}</option>`).join('');
   }
-
-  const sortInput = document.getElementById('cat-sort-input');
-  if (sortInput) sortInput.value = ce.sort || 0;
 
   _catCurrentLang = 'en';
   _catDirtyLangs  = new Set();
@@ -184,11 +187,7 @@ export function initCategoriesEdit() {
 
 export function setCatType(type) {
   SAMPLE.categoryEdit.type = type;
-  const mainBtn    = document.getElementById('cat-type-main');
-  const subBtn     = document.getElementById('cat-type-sub');
   const parentGrp  = document.getElementById('cat-parent-group');
-  if (mainBtn)   mainBtn.classList.toggle('active', type === 'main');
-  if (subBtn)    subBtn.classList.toggle('active', type === 'sub');
   if (parentGrp) parentGrp.style.display = type === 'sub' ? 'block' : 'none';
 }
 

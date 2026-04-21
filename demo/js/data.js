@@ -235,10 +235,32 @@ export const SAMPLE = {
   ],
 
   specGroups: [
-    { name: 'General',            category: 'Industrial Motherboards', sort: 1, fields: 5 },
-    { name: 'I/O Interface',      category: 'Industrial Motherboards', sort: 2, fields: 6 },
-    { name: 'Power & Mechanical', category: 'Industrial Computers',    sort: 1, fields: 4 },
-    { name: 'Expansion',          category: 'Industrial Computers',    sort: 2, fields: 3 },
+    { name: 'General', category: 'Industrial Motherboards', sort: 1, enabled: true, fields: [
+      { id: 1,  name: 'CPU',        enabled: true  },
+      { id: 2,  name: 'Chipset',    enabled: true  },
+      { id: 3,  name: 'Memory',     enabled: true  },
+      { id: 4,  name: 'Storage',    enabled: true  },
+      { id: 5,  name: 'OS Support', enabled: false },
+    ]},
+    { name: 'I/O Interface', category: 'Industrial Motherboards', sort: 2, enabled: true, fields: [
+      { id: 6,  name: 'LAN',     enabled: true  },
+      { id: 7,  name: 'USB',     enabled: true  },
+      { id: 8,  name: 'Display', enabled: true  },
+      { id: 9,  name: 'Serial',  enabled: true  },
+      { id: 10, name: 'Audio',   enabled: false },
+      { id: 11, name: 'GPIO',    enabled: true  },
+    ]},
+    { name: 'Power & Mechanical', category: 'Industrial Computers', sort: 1, enabled: true, fields: [
+      { id: 12, name: 'Power Input',    enabled: true  },
+      { id: 13, name: 'Operating Temp', enabled: true  },
+      { id: 14, name: 'Dimension',      enabled: true  },
+      { id: 15, name: 'Weight',         enabled: false },
+    ]},
+    { name: 'Expansion', category: 'Industrial Computers', sort: 2, enabled: false, fields: [
+      { id: 16, name: 'PCIe Slots', enabled: true  },
+      { id: 17, name: 'M.2 Slots',  enabled: true  },
+      { id: 18, name: 'SATA',       enabled: false },
+    ]},
   ],
 
   products: [
@@ -473,8 +495,9 @@ export const SAMPLE = {
   },
 
   specGroupEdit: {
-    name: 'General',
-    category: 'Industrial Motherboards',
+    key: 'general',
+    enabled: true,
+    categories: ['Industrial Motherboards'],
     sort: 1,
     langStatuses: [
       { code: 'en', name: 'EN' },
@@ -487,11 +510,11 @@ export const SAMPLE = {
       en: 'General', tw: '通用規格', cn: '通用规格', jp: '一般仕様', de: 'Allgemeines',
     },
     fields: [
-      { id: 1, sort: 1, names: { en: 'CPU',        tw: '處理器',       cn: '处理器',       jp: 'CPU',           de: 'CPU'               } },
-      { id: 2, sort: 2, names: { en: 'Chipset',     tw: '晶片組',       cn: '芯片组',       jp: 'チップセット',   de: 'Chipsatz'          } },
-      { id: 3, sort: 3, names: { en: 'Memory',      tw: '記憶體',       cn: '内存',         jp: 'メモリ',         de: 'Arbeitsspeicher'   } },
-      { id: 4, sort: 4, names: { en: 'Storage',     tw: '儲存裝置',     cn: '存储设备',     jp: 'ストレージ',     de: 'Speicher'          } },
-      { id: 5, sort: 5, names: { en: 'OS Support',  tw: '作業系統支援', cn: '操作系统支持', jp: 'OSサポート',     de: 'OS-Unterstützung'  } },
+      { id: 1, sort: 1, key: 'CPU',        enabled: true,  names: { en: 'CPU',        tw: '處理器',       cn: '处理器',       jp: 'CPU',           de: 'CPU'              } },
+      { id: 2, sort: 2, key: 'Chipset',    enabled: true,  names: { en: 'Chipset',     tw: '晶片組',       cn: '芯片组',       jp: 'チップセット',   de: 'Chipsatz'         } },
+      { id: 3, sort: 3, key: 'Memory',     enabled: true,  names: { en: 'Memory',      tw: '記憶體',       cn: '内存',         jp: 'メモリ',         de: 'Arbeitsspeicher'  } },
+      { id: 4, sort: 4, key: 'Storage',    enabled: true,  names: { en: 'Storage',     tw: '儲存裝置',     cn: '存储设备',     jp: 'ストレージ',     de: 'Speicher'         } },
+      { id: 5, sort: 5, key: 'OS Support', enabled: false, names: { en: 'OS Support',  tw: '作業系統支援', cn: '操作系统支持', jp: 'OSサポート',     de: 'OS-Unterstützung' } },
     ],
   },
 

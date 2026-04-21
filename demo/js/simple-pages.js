@@ -121,49 +121,324 @@ export function initTagsEdit() {
   renderTagLangTabs();
 }
 
-export function initSpecs() {
-  const tbody = document.querySelector('#view-specs .table-wrap tbody');
-  const info  = document.querySelector('#view-specs .pagination-info');
-  if (!tbody) return;
-  tbody.innerHTML = SAMPLE.specGroups.map(g => `
-    <tr draggable="true">
-      <td style="width:32px;padding:0 8px;cursor:grab"><span class="drag-handle" title="拖曳排序">⋮⋮</span></td>
-      <td><strong>${g.name}</strong></td>
-      <td>${g.fields}</td>
-      <td>${g.category}</td>
-      <td>${editDeleteBtns('specs-edit')}</td>
-    </tr>`).join('');
-  if (info) info.textContent = `共 ${SAMPLE.specGroups.length} 筆`;
+const SPEC_ICON_FOLDER = `<svg class="cat-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
+const SPEC_ICON_FILE   = `<svg class="cat-icon cat-icon-sub" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
 
-  const catSel = document.querySelector('#view-specs select.filter-select');
+function _specGroupToggleHtml(name, enabled) {
+  const safe = name.replace(/'/g, "\\'");
+  return `<label class="status-capsule" onclick="event.stopPropagation()">
+    <input type="checkbox" ${enabled ? 'checked' : ''}
+      onchange="toggleSpecGroupEnabled('${safe}', this.checked)">
+    <span class="status-capsule-pill"></span>
+  </label>`;
+}
+
+function _specFieldToggleHtml(groupName, fieldId, enabled) {
+  const safe = groupName.replace(/'/g, "\\'");
+  return `<label class="status-capsule" onclick="event.stopPropagation()">
+    <input type="checkbox" ${enabled ? 'checked' : ''}
+      onchange="toggleSpecFieldEnabled('${safe}', ${fieldId}, this.checked)">
+    <span class="status-capsule-pill"></span>
+  </label>`;
+}
+
+function renderSpecTree(groups) {
+  const tree = document.getElementById('spec-tree');
+  if (!tree) return;
+
+  if (!groups.length) {
+    tree.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-3)">尚無規格資料</div>`;
+    return;
+  }
+
+  tree.innerHTML = groups.map(g => {
+    const fields = g.fields || [];
+    const safeAttr = g.name.replace(/"/g, '&quot;');
+    return `
+      <div class="cat-node cat-parent" draggable="true" data-name="${safeAttr}">
+        <div class="cat-node-row">
+          <span class="drag-handle" title="拖曳排序">⋮⋮</span>
+          <button class="cat-toggle open" title="折疊">▾</button>
+          ${SPEC_ICON_FOLDER}
+          <span class="cat-name${g.enabled === false ? ' cat-name-off' : ''}">${g.name}</span>
+          ${_specGroupToggleHtml(g.name, g.enabled !== false)}
+          <div class="cat-actions">${editDeleteBtns('specs-edit')}</div>
+        </div>
+        <div class="cat-children">
+          ${fields.map(f => `
+            <div class="cat-node cat-child" draggable="true" data-group="${safeAttr}" data-id="${f.id}">
+              <div class="cat-node-row">
+                <span class="drag-handle" title="拖曳排序">⋮⋮</span>
+                <span class="cat-toggle-spacer"></span>
+                ${SPEC_ICON_FILE}
+                <span class="cat-name${f.enabled === false ? ' cat-name-off' : ''}">${f.key || f.name || ''}</span>
+                ${_specFieldToggleHtml(g.name, f.id, f.enabled !== false)}
+                <div class="cat-actions">${editDeleteBtns('specs-edit')}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
+  tree.querySelectorAll('.cat-toggle').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const node = btn.closest('.cat-parent');
+      const children = node.querySelector('.cat-children');
+      const open = btn.classList.toggle('open');
+      btn.textContent = open ? '▾' : '▸';
+      children.style.display = open ? '' : 'none';
+    });
+  });
+
+  setupSpecTreeDnD(tree);
+}
+
+export function initSpecs() {
+  const catSel = document.getElementById('spec-list-cat-filter');
   if (catSel) {
     catSel.innerHTML = '<option value="">全部分類</option>' +
       SAMPLE.mainCategories.map(c => `<option>${c}</option>`).join('');
+    const freshCat = catSel.cloneNode(true);
+    catSel.parentNode.replaceChild(freshCat, catSel);
+    freshCat.addEventListener('change', _filterSpecTree);
   }
+
+  const searchInp = document.getElementById('spec-list-search');
+  if (searchInp) {
+    const freshSearch = searchInp.cloneNode(true);
+    searchInp.parentNode.replaceChild(freshSearch, searchInp);
+    freshSearch.addEventListener('input', _filterSpecTree);
+  }
+
+  renderSpecTree(SAMPLE.specGroups);
 }
 
-export function initSpecsEdit() {
-  const g = SAMPLE.specGroupEdit;
-  document.querySelectorAll('#view-specs-edit .form-group').forEach(grp => {
-    const label = grp.querySelector('.form-label');
-    if (!label) return;
-    const text = label.textContent.trim();
-    const inp  = grp.querySelector('input');
-    const sel  = grp.querySelector('select');
-    if (text === '群組名稱（識別用）' && inp) inp.value = g.name;
-    if (text === '排序' && inp) inp.value = g.sort;
-    if (text === '綁定大分類' && sel) {
-      sel.innerHTML = '<option value="">請選擇</option>' +
-        SAMPLE.mainCategories.map(c => `<option${c === g.category ? ' selected' : ''}>${c}</option>`).join('');
+function _filterSpecTree() {
+  const q   = (document.getElementById('spec-list-search')?.value || '').toLowerCase().trim();
+  const cat = document.getElementById('spec-list-cat-filter')?.value || '';
+  let groups = SAMPLE.specGroups;
+  if (cat) groups = groups.filter(g => g.category === cat);
+  if (q)   groups = groups.filter(g =>
+    g.name.toLowerCase().includes(q) ||
+    (g.fields || []).some(f => (f.key || '').toLowerCase().includes(q))
+  );
+  renderSpecTree(groups);
+}
+
+function setupSpecTreeDnD(treeEl) {
+  if (treeEl.dataset.dndAttached) return;
+  treeEl.dataset.dndAttached = '1';
+  let dragSrc = null;
+
+  treeEl.addEventListener('dragstart', e => {
+    const child = e.target.closest('.cat-child');
+    if (child) { dragSrc = child; child.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; return; }
+    const parent = e.target.closest('.cat-parent');
+    if (parent) { dragSrc = parent; parent.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+  });
+
+  treeEl.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (!dragSrc) return;
+    if (dragSrc.classList.contains('cat-parent')) {
+      const target = e.target.closest('.cat-parent');
+      if (!target || target === dragSrc) return;
+      treeEl.querySelectorAll('.cat-parent.drag-over').forEach(n => n.classList.remove('drag-over'));
+      target.classList.add('drag-over');
+    } else {
+      const target = e.target.closest('.cat-child');
+      if (!target || target === dragSrc || target.dataset.group !== dragSrc.dataset.group) return;
+      treeEl.querySelectorAll('.cat-child.drag-over').forEach(n => n.classList.remove('drag-over'));
+      target.classList.add('drag-over');
     }
   });
-  _specCurrentLang = 'en';
-  renderSpecLangTabs();
+
+  treeEl.addEventListener('dragleave', e => {
+    if (!treeEl.contains(e.relatedTarget)) {
+      treeEl.querySelectorAll('.drag-over').forEach(n => n.classList.remove('drag-over'));
+    }
+  });
+
+  treeEl.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!dragSrc) return;
+    if (dragSrc.classList.contains('cat-parent')) {
+      const target = e.target.closest('.cat-parent');
+      if (!target || target === dragSrc) return;
+      const si = SAMPLE.specGroups.findIndex(g => g.name === dragSrc.dataset.name);
+      const di = SAMPLE.specGroups.findIndex(g => g.name === target.dataset.name);
+      if (si < 0 || di < 0) { dragSrc = null; return; }
+      const [moved] = SAMPLE.specGroups.splice(si, 1);
+      SAMPLE.specGroups.splice(di, 0, moved);
+      SAMPLE.specGroups.forEach((g, i) => { g.sort = i + 1; });
+    } else {
+      const target = e.target.closest('.cat-child');
+      if (!target || target === dragSrc || target.dataset.group !== dragSrc.dataset.group) return;
+      const group = SAMPLE.specGroups.find(g => g.name === dragSrc.dataset.group);
+      if (!group) { dragSrc = null; return; }
+      const fields = group.fields;
+      const si = fields.findIndex(f => String(f.id) === dragSrc.dataset.id);
+      const di = fields.findIndex(f => String(f.id) === target.dataset.id);
+      if (si < 0 || di < 0) { dragSrc = null; return; }
+      const [moved] = fields.splice(si, 1);
+      fields.splice(di, 0, moved);
+    }
+    dragSrc = null;
+    renderSpecTree(SAMPLE.specGroups);
+  });
+
+  treeEl.addEventListener('dragend', () => {
+    treeEl.querySelectorAll('.dragging, .drag-over').forEach(n => n.classList.remove('dragging', 'drag-over'));
+    dragSrc = null;
+  });
+}
+
+export function toggleSpecGroupEnabled(name, enabled) {
+  const g = SAMPLE.specGroups.find(g => g.name === name);
+  if (g) g.enabled = enabled;
+  const nameEl = document.querySelector(`#spec-tree .cat-parent[data-name="${name.replace(/"/g, '&quot;')}"] > .cat-node-row .cat-name`);
+  if (nameEl) nameEl.classList.toggle('cat-name-off', !enabled);
+}
+
+export function toggleSpecFieldEnabled(groupName, fieldId, enabled) {
+  const g = SAMPLE.specGroups.find(g => g.name === groupName);
+  if (!g) return;
+  const f = (g.fields || []).find(f => f.id === fieldId);
+  if (f) f.enabled = enabled;
+  const nameEl = document.querySelector(`#spec-tree .cat-child[data-id="${fieldId}"] .cat-name`);
+  if (nameEl) nameEl.classList.toggle('cat-name-off', !enabled);
 }
 
 // ── Spec group edit state ─────────────────────────────────────
 let _specCurrentLang = 'en';
 let _specNextFieldId = 100;
+
+export function initSpecsEdit() {
+  const g = SAMPLE.specGroupEdit;
+  const keyInp = document.getElementById('spec-edit-key');
+  if (keyInp) keyInp.value = g.key || '';
+  const statusCb = document.getElementById('spec-edit-status');
+  if (statusCb) statusCb.checked = g.enabled !== false;
+  renderSpecEditCategories();
+  renderSpecFields();
+  _specCurrentLang = 'en';
+  renderSpecLangTabs();
+}
+
+function renderSpecEditCategories() {
+  const container = document.getElementById('spec-edit-categories');
+  if (!container) return;
+  const selected = new Set(SAMPLE.specGroupEdit.categories || []);
+  container.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px">
+    ${SAMPLE.mainCategories.map(c => {
+      const on = selected.has(c);
+      return `<label style="display:flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid ${on ? '#2563EB' : 'var(--border)'};border-radius:20px;cursor:pointer;font-size:13px;background:${on ? '#EFF6FF' : 'transparent'};color:${on ? '#2563EB' : 'var(--text-1)'};user-select:none">
+        <input type="checkbox" value="${c.replace(/"/g, '&quot;')}" ${on ? 'checked' : ''} style="display:none"
+          onchange="toggleSpecEditCategory('${c.replace(/'/g, "\\'")}',this.checked)" />
+        ${c}
+      </label>`;
+    }).join('')}
+  </div>`;
+}
+
+export function toggleSpecEditCategory(cat, checked) {
+  SAMPLE.specGroupEdit.categories = SAMPLE.specGroupEdit.categories || [];
+  if (checked) {
+    if (!SAMPLE.specGroupEdit.categories.includes(cat)) SAMPLE.specGroupEdit.categories.push(cat);
+  } else {
+    SAMPLE.specGroupEdit.categories = SAMPLE.specGroupEdit.categories.filter(c => c !== cat);
+  }
+  renderSpecEditCategories();
+}
+
+function renderSpecFields() {
+  const container = document.getElementById('spec-edit-fields-list');
+  if (!container) return;
+  const fields = SAMPLE.specGroupEdit.fields || [];
+
+  if (!fields.length) {
+    container.innerHTML = `<div style="padding:16px 0;color:var(--text-3);font-size:13px">尚無規格欄位，請點擊下方「新增欄位」</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:2px">
+      <span style="width:44px;flex-shrink:0"></span>
+      <span style="font-size:11px;color:var(--text-3);flex:1">識別名稱</span>
+      <span style="font-size:11px;color:var(--text-3);width:60px;text-align:center;flex-shrink:0">啟用</span>
+      <span style="width:44px;flex-shrink:0"></span>
+    </div>
+    ${fields.map((f, i) => `
+      <div class="spec-field-row" data-id="${f.id}" draggable="true"
+        style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span class="drag-handle" style="color:var(--text-3);cursor:grab;flex-shrink:0;width:20px;text-align:center">⋮⋮</span>
+        <span style="color:var(--text-3);font-size:12px;width:20px;flex-shrink:0;text-align:right">${i + 1}</span>
+        <input class="form-input" type="text" value="${(f.key || '').replace(/"/g, '&quot;')}"
+          placeholder="識別名稱（英文）" oninput="updateSpecFieldKey(${f.id},this.value)" style="flex:1" />
+        <div style="width:60px;display:flex;justify-content:center;flex-shrink:0">
+          <label class="status-capsule" onclick="event.stopPropagation()">
+            <input type="checkbox" ${f.enabled !== false ? 'checked' : ''}
+              onchange="toggleSpecFieldStatus(${f.id},this.checked)" />
+            <span class="status-capsule-pill"></span>
+          </label>
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="removeSpecField(${f.id})" style="flex-shrink:0">刪除</button>
+      </div>`).join('')}`;
+
+  setupSpecFieldsDnD(container);
+}
+
+function setupSpecFieldsDnD(container) {
+  if (container.dataset.dndAttached) return;
+  container.dataset.dndAttached = '1';
+  let dragSrc = null;
+
+  container.addEventListener('dragstart', e => {
+    const row = e.target.closest('.spec-field-row');
+    if (!row) return;
+    dragSrc = row;
+    row.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  container.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (!dragSrc) return;
+    const target = e.target.closest('.spec-field-row');
+    if (!target || target === dragSrc) return;
+    container.querySelectorAll('.spec-field-row.drag-over').forEach(n => n.classList.remove('drag-over'));
+    target.classList.add('drag-over');
+  });
+
+  container.addEventListener('dragleave', e => {
+    if (!container.contains(e.relatedTarget)) {
+      container.querySelectorAll('.drag-over').forEach(n => n.classList.remove('drag-over'));
+    }
+  });
+
+  container.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!dragSrc) return;
+    const target = e.target.closest('.spec-field-row');
+    if (!target || target === dragSrc) return;
+    const fields = SAMPLE.specGroupEdit.fields;
+    const si = fields.findIndex(f => String(f.id) === dragSrc.dataset.id);
+    const di = fields.findIndex(f => String(f.id) === target.dataset.id);
+    if (si < 0 || di < 0) { dragSrc = null; return; }
+    const [moved] = fields.splice(si, 1);
+    fields.splice(di, 0, moved);
+    dragSrc = null;
+    renderSpecFields();
+    renderSpecLangTabs();
+    switchSpecLangTab(_specCurrentLang);
+  });
+
+  container.addEventListener('dragend', () => {
+    container.querySelectorAll('.dragging, .drag-over').forEach(n => n.classList.remove('dragging', 'drag-over'));
+    dragSrc = null;
+  });
+}
 
 export function renderSpecLangTabs() {
   const langs = SAMPLE.specGroupEdit.langStatuses || [];
@@ -186,36 +461,37 @@ export function renderSpecLangTabs() {
   const panelsEl = document.getElementById('spec-lang-tab-panels');
   if (!panelsEl) return;
 
+  const fields = SAMPLE.specGroupEdit.fields || [];
+
   panelsEl.innerHTML = langs.map(l => {
     const isActive  = l.code === _specCurrentLang;
     const groupName = (SAMPLE.specGroupEdit.names || {})[l.code] || '';
-    const fields    = SAMPLE.specGroupEdit.fields || [];
 
     const fieldsHtml = fields.length === 0
-      ? `<div class="empty-state" style="padding:24px 0"><div class="empty-state-text">尚無規格欄位</div></div>`
-      : fields.map((f, i) => `
-          <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
-            <span style="color:var(--text-3);font-size:12px;width:20px;flex-shrink:0">${i + 1}</span>
-            <input class="form-input" type="text" value="${((f.names || {})[l.code] || '').replace(/"/g, '&quot;')}"
-              placeholder="欄位名稱" oninput="updateSpecFieldName(${f.id},'${l.code}',this.value)" style="flex:1" />
-            <button class="btn btn-sm btn-danger" onclick="removeSpecField(${f.id})">刪除</button>
-          </div>`).join('');
+      ? `<div style="color:var(--text-3);font-size:13px;padding:12px 0">請先在「規格欄位」區塊新增欄位</div>`
+      : `<div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:2px">
+          <span style="font-size:11px;color:var(--text-3);width:110px;flex-shrink:0">識別名稱</span>
+          <span style="font-size:11px;color:var(--text-3);flex:1">顯示名稱</span>
+        </div>
+        ${fields.map(f => `
+          <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:12px;color:var(--text-3);width:110px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(f.key||'').replace(/"/g,'&quot;')}">${f.key || '—'}</span>
+            <input class="form-input" type="text"
+              value="${((f.names || {})[l.code] || '').replace(/"/g, '&quot;')}"
+              placeholder="顯示名稱" oninput="updateSpecFieldName(${f.id},'${l.code}',this.value)"
+              style="flex:1" />
+          </div>`).join('')}`;
 
     return `<div class="tab-panel lang-tab-panel${isActive ? ' active' : ''}" data-lang-panel="${l.code}">
       <div class="lang-edit-body">
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">群組顯示名稱</label>
-            <input class="form-input" type="text" value="${groupName.replace(/"/g, '&quot;')}"
-              oninput="updateSpecGroupName('${l.code}',this.value)" />
-          </div>
+        <div class="form-group" style="margin-bottom:20px">
+          <label class="form-label">群組顯示名稱 <span class="form-label-hint">Group Display Name</span></label>
+          <input class="form-input" type="text" value="${groupName.replace(/"/g, '&quot;')}"
+            oninput="updateSpecGroupName('${l.code}',this.value)" />
         </div>
-        <div class="divider"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <label class="form-label" style="margin:0">規格欄位</label>
-          <button class="btn btn-sm btn-primary" onclick="addSpecField()">+ 新增欄位</button>
-        </div>
-        <div id="spec-fields-${l.code}">${fieldsHtml}</div>
+        <div class="divider" style="margin-bottom:16px"></div>
+        <label class="form-label" style="display:block;margin-bottom:12px">欄位顯示名稱 <span class="form-label-hint">Field Display Names</span></label>
+        ${fieldsHtml}
       </div>
     </div>`;
   }).join('');
@@ -241,28 +517,34 @@ export function addSpecField() {
   const names = {};
   (SAMPLE.specGroupEdit.langStatuses || []).forEach(l => { names[l.code] = ''; });
   SAMPLE.specGroupEdit.fields = SAMPLE.specGroupEdit.fields || [];
-  SAMPLE.specGroupEdit.fields.push({ id, sort: SAMPLE.specGroupEdit.fields.length + 1, names });
+  SAMPLE.specGroupEdit.fields.push({ id, sort: SAMPLE.specGroupEdit.fields.length + 1, key: '', enabled: true, names });
+  renderSpecFields();
   renderSpecLangTabs();
   switchSpecLangTab(_specCurrentLang);
-  const container = document.getElementById(`spec-fields-${_specCurrentLang}`);
-  if (container) {
-    const inputs = container.querySelectorAll('input');
-    if (inputs.length) inputs[inputs.length - 1].focus();
-  }
+  const rows = document.querySelectorAll('#spec-edit-fields-list .spec-field-row input[type=text]');
+  if (rows.length) rows[rows.length - 1].focus();
 }
 
 export function removeSpecField(id) {
   SAMPLE.specGroupEdit.fields = (SAMPLE.specGroupEdit.fields || []).filter(f => f.id !== id);
+  renderSpecFields();
   renderSpecLangTabs();
   switchSpecLangTab(_specCurrentLang);
 }
 
 export function updateSpecFieldName(id, code, value) {
   const field = (SAMPLE.specGroupEdit.fields || []).find(f => f.id === id);
-  if (field) {
-    field.names = field.names || {};
-    field.names[code] = value;
-  }
+  if (field) { field.names = field.names || {}; field.names[code] = value; }
+}
+
+export function updateSpecFieldKey(id, value) {
+  const field = (SAMPLE.specGroupEdit.fields || []).find(f => f.id === id);
+  if (field) field.key = value;
+}
+
+export function toggleSpecFieldStatus(id, enabled) {
+  const field = (SAMPLE.specGroupEdit.fields || []).find(f => f.id === id);
+  if (field) field.enabled = enabled;
 }
 
 export function openSpecLangCopyModal() {
@@ -1464,7 +1746,9 @@ Object.assign(window, { removeFilesEditProd, openFilesEditProdModal, closeFilesE
   enableTagLang, openTagLangDisableModal, confirmTagLangDisable,
   toggleTagLangTabMenu, closeTagLangTabMenu,
   openTagLangCopyModal, refreshTagLangCopyTargets, confirmTagLangCopy,
-  switchSpecLangTab, updateSpecGroupName, addSpecField, removeSpecField, updateSpecFieldName,
-  openSpecLangCopyModal, refreshSpecLangCopyTargets, confirmSpecLangCopy,
+  toggleSpecGroupEnabled, toggleSpecFieldEnabled,
+  toggleSpecEditCategory, updateSpecFieldKey, toggleSpecFieldStatus,
+  switchSpecLangTab, updateSpecGroupName, addSpecField, removeSpecField,
+  updateSpecFieldName, openSpecLangCopyModal, refreshSpecLangCopyTargets, confirmSpecLangCopy,
   setAuditPage, setErrorPage,
 });
